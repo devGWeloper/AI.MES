@@ -1,0 +1,113 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: ai-mes-backend
+  
+  profiles:
+    active: local
+  
+  jackson:
+    time-zone: Asia/Seoul
+    date-format: yyyy-MM-dd HH:mm:ss
+    property-naming-strategy: SNAKE_CASE
+  
+  security:
+    jwt:
+      secret: ai-mes-jwt-secret-key-for-development-only-change-in-production
+      expiration: 86400000 # 24 hours
+
+# MyBatis Configuration
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.ai.mes.model
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
+
+# AI Service Configuration
+ai-service:
+  base-url: http://localhost:8000
+  timeout: 30000
+
+# Logging Configuration
+logging:
+  level:
+    com.ai.mes: DEBUG
+    org.springframework.security: DEBUG
+    org.mybatis: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%level] %logger{36} - %msg%n"
+
+# Management Endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+---
+# Local Development Profile
+spring:
+  config:
+    activate:
+      on-profile: local
+  
+  datasource:
+    # M14 Fab Database
+    m14:
+      jdbc-url: jdbc:oracle:thin:@localhost:1521:M14DB
+      username: m14_user
+      password: m14_password
+      driver-class-name: oracle.jdbc.OracleDriver
+      
+    # M15 Fab Database  
+    m15:
+      jdbc-url: jdbc:oracle:thin:@localhost:1521:M15DB
+      username: m15_user
+      password: m15_password
+      driver-class-name: oracle.jdbc.OracleDriver
+      
+    # M16 Fab Database
+    m16:
+      jdbc-url: jdbc:oracle:thin:@localhost:1521:M16DB
+      username: m16_user
+      password: m16_password
+      driver-class-name: oracle.jdbc.OracleDriver
+
+---
+# Production Profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+  
+  datasource:
+    # M14 Fab Database
+    m14:
+      jdbc-url: ${M14_DB_URL}
+      username: ${M14_DB_USERNAME}
+      password: ${M14_DB_PASSWORD}
+      driver-class-name: oracle.jdbc.OracleDriver
+      
+    # M15 Fab Database  
+    m15:
+      jdbc-url: ${M15_DB_URL}
+      username: ${M15_DB_USERNAME}
+      password: ${M15_DB_PASSWORD}
+      driver-class-name: oracle.jdbc.OracleDriver
+      
+    # M16 Fab Database
+    m16:
+      jdbc-url: ${M16_DB_URL}
+      username: ${M16_DB_USERNAME}
+      password: ${M16_DB_PASSWORD}
+      driver-class-name: oracle.jdbc.OracleDriver

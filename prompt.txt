@@ -1,0 +1,72 @@
+📌 목적:
+MES(Manufacturing Execution System) 웹 애플리케이션에 AI 기능을 도입하여, 각 화면에서 AI가 실시간으로 데이터를 분석하거나 의사결정을 도와주는 시스템을 구축하고자 한다.
+
+🌐 시스템 구성:
+- Frontend: Next.js (React 기반)
+- Backend: Spring Boot (비즈니스 로직, DB 연동, 인증/인가)
+- AI: Python FastAPI + LangChain 기반 LLM Agent 시스템
+
+📐 구조 개요:
+1. 각 MES 화면 은 고유의 비즈니스 문맥을 가진다.
+2. 화면 진입 시 해당 화면 전용 Agent에게 쿼리를 보내고, Agent는 관련 정보를 기반으로 의사결정/분석 결과를 반환한다.
+3. Agent는 LangChain 기반으로 구축되며, RAG + Tool + Agent 구조를 따른다.
+4  각 화면의 정보들을 context로 가지고있다가 추후 AI Agent에게 제공해야함
+5. 전체 흐름은 아래와 같다:
+
+   [사용자 요청] → [Next.js 화면 → Spring Boot API] → [FastAPI AI Agent 호출] → [LLM + RAG + Tool 실행] → 응답 반환
+
+🧠 AI 기능 요약:
+- 각 Agent는 특정 업무 도메인에 특화되어 있으며, 독립적으로 RAG와 Tool을 사용
+- 예: LOT 추적 Agent, 설비 진단 Agent, 품질 예측 Agent 등
+- RAG: FAISS or Chroma 기반 벡터 검색
+- Tool: 내부 DB/API 호출 (예: LOT 상태 API, 공정이력 API)
+
+🛠 기술 스택:
+👉 Frontend (Next.js)
+- React + Next.js 14 App Router
+- Tailwind CSS
+- React Query
+- TypeScript
+- Axios (API 연동)
+- SWR or TanStack Query (선택)
+
+👉 Backend (Spring Boot)
+- Spring Boot 3.x
+- Spring Security (JWT 인증)
+- mybatis(jdbc) + oracle
+- REST API
+- OpenAPI/Swagger 문서 자동화
+
+👉 AI (FastAPI + LangChain)
+- Python 3.11+
+- FastAPI
+- LangChain (multi-agent, RAG)
+- FAISS or Chroma (vector store)
+- OpenAI. API key는 사내에서 제공해주는 key값 사용 예정
+- Tool abstraction (SQL/REST API 기반 기능 실행)
+
+📦 데이터 흐름 예시 (LOT 추적 화면):
+1. 사용자가 LOT 번호 입력
+2. Spring Boot에서 LOT 관련 정보 수집 (DB 또는 API)
+3. FastAPI에 LOT 번호 + context 전달
+4. LangChain Agent가 관련 문서 검색(RAG) + Tool 실행
+5. “현재 LOT은 검사 대기 상태이며, 설비 B에서 대기 중입니다” 등의 분석 결과 반환
+
+화면 구성:
+1. 첫 페이지는 랜딩페이지로 AI MES를 소개해주는 화면
+2. 윗쪽에 navigator메뉴가 있고 tree식으로 구현
+3. 대메뉴는 Lot, Equipment,  반송 이렇게 3개
+4. Lot 하위메뉴에 Lot History, Lot Status 화면 구성
+5. Equipment 하위메뉴에는 Eqp History, Eqp Status 화면 구성
+6. 반송 하위메뉴에는 [반송 이력 조회] 이렇게 한개 존재
+7. 화면은 최대한 깔끔하고 Tailwind를 사용해 최대한 이쁘게 꾸밀것
+8. AI Agent는 각 화면별로 1개씩 존재함
+
+추가 요구사항:
+1. mybatis를 사용하고 db는 여러개 사용함.
+2. 각 팹별 DB를 들여다보고 조회하여 화면에 붙혀서 보여주는 방식
+3. 팹의 종류는 m14,m15,m16 3개가 있고, mybatisconfiguration파일의 db 세부 정보는 내가 직접 기입할테니 구조만 생성
+4. 도커는 사용하지 않음
+5. backend는 maven을 사용함
+
+

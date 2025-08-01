@@ -1,0 +1,33 @@
+{
+  "name": "ai-mes-system",
+  "version": "1.0.0",
+  "description": "AI-powered Manufacturing Execution System",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:ai\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && mvn spring-boot:run",
+    "dev:ai": "cd ai-service && uvicorn app.main:app --reload",
+    "build": "npm run build:frontend",
+    "build:frontend": "cd frontend && npm run build",
+    "start": "npm run start:frontend",
+    "start:frontend": "cd frontend && npm start",
+    "install:all": "npm run install:frontend && npm run install:ai",
+    "install:frontend": "cd frontend && npm install",
+    "install:ai": "cd ai-service && pip install -r requirements.txt"
+  },
+  "keywords": [
+    "MES",
+    "AI",
+    "Manufacturing",
+    "LangChain",
+    "OpenAI",
+    "Next.js",
+    "Spring Boot",
+    "FastAPI"
+  ],
+  "author": "AI MES Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
