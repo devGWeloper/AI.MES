@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, Download, Bot, ArrowLeft, AlertTriangle } from 'lucide-react';
+import { Search, Filter, Download, Bot, ArrowLeft, AlertTriangle, MessageCircle } from 'lucide-react';
+import AIChatPanel from '@/components/AIChatPanel';
 
 interface ReturnHistory {
   id: string;
@@ -26,8 +27,7 @@ export default function ReturnHistoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFab, setSelectedFab] = useState('all');
   const [selectedSeverity, setSelectedSeverity] = useState('all');
-  const [aiAnalysis, setAiAnalysis] = useState('');
-  const [showAiPanel, setShowAiPanel] = useState(false);
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   // Mock data
   useEffect(() => {
@@ -98,38 +98,6 @@ export default function ReturnHistoryPage() {
     setReturnData(mockData);
   }, []);
 
-  const handleAiAnalysis = async () => {
-    setShowAiPanel(true);
-    setLoading(true);
-    
-    setTimeout(() => {
-      setAiAnalysis(`
-🤖 반송 이력 AI 분석:
-
-📊 반송 현황 분석:
-- 총 ${returnData.length}건의 반송 이력
-- 해결완료: ${returnData.filter(ret => ret.status === '해결완료').length}건
-- 처리중: ${returnData.filter(ret => ret.status === '처리중').length}건
-- 분석중: ${returnData.filter(ret => ret.status === '분석중').length}건
-
-⚠️ 주요 반송 원인:
-1. 품질 불량 (50%): PR 두께 및 측정값 이상
-2. 설비 오염 (25%): 챔버 클리닝 필요
-3. 공정 파라미터 오류 (25%): 레시피 조정 필요
-
-🚨 긴급 조치 필요:
-- High 심각도 반송: ${returnData.filter(ret => ret.severity === 'High').length}건
-- M14 팹에서 반송률이 높음 (2건)
-
-💡 개선 제안:
-1. M14 팹의 품질 관리 강화
-2. 예방 정비 스케줄 조정
-3. 공정 파라미터 모니터링 시스템 구축
-      `);
-      setLoading(false);
-    }, 2000);
-  };
-
   const filteredData = returnData.filter(ret => {
     const matchesSearch = ret.returnId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          ret.lotNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -167,10 +135,10 @@ export default function ReturnHistoryPage() {
             <p className="text-gray-600 mt-2">Lot 반송 이력 및 처리 현황 조회</p>
           </div>
           <button
-            onClick={handleAiAnalysis}
+            onClick={() => setIsAIChatOpen(true)}
             className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            <Bot className="w-5 h-5" />
+            <MessageCircle className="w-5 h-5" />
             <span>AI 분석</span>
           </button>
         </div>
@@ -284,115 +252,91 @@ export default function ReturnHistoryPage() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Data Table */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  반송 이력 목록 ({filteredData.length}건)
-                </h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        반송 ID
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        LOT 번호
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        제품
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        팹
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        반송 사유
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        심각도
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        상태
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        반송일시
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredData.map((returnItem) => (
-                      <tr key={returnItem.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          <div className="flex items-center space-x-2">
-                            <ArrowLeft className="w-4 h-4 text-orange-600" />
-                            <span>{returnItem.returnId}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {returnItem.lotNumber}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {returnItem.product}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {returnItem.fab}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {returnItem.returnReason}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getSeverityColor(returnItem.severity)}`}>
-                            {returnItem.severity}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(returnItem.status)}`}>
-                            {returnItem.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {returnItem.returnDate.split(' ')[0]}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+        {/* Data Table */}
+        <div className="bg-white rounded-lg shadow">
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">
+              반송 이력 목록 ({filteredData.length}건)
+            </h3>
           </div>
-
-          {/* AI Analysis Panel */}
-          {showAiPanel && (
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow">
-                <div className="p-6 border-b border-gray-200">
-                  <div className="flex items-center space-x-2">
-                    <Bot className="w-5 h-5 text-blue-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">AI 분석</h3>
-                  </div>
-                </div>
-                <div className="p-6">
-                  {loading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    </div>
-                  ) : (
-                    <div className="prose prose-sm max-w-none">
-                      <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">
-                        {aiAnalysis}
-                      </pre>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    반송 ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    LOT 번호
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    제품
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    팹
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    반송 사유
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    심각도
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    상태
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    반송일시
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredData.map((returnItem) => (
+                  <tr key={returnItem.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <div className="flex items-center space-x-2">
+                        <ArrowLeft className="w-4 h-4 text-orange-600" />
+                        <span>{returnItem.returnId}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {returnItem.lotNumber}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {returnItem.product}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {returnItem.fab}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {returnItem.returnReason}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getSeverityColor(returnItem.severity)}`}>
+                        {returnItem.severity}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(returnItem.status)}`}>
+                        {returnItem.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {returnItem.returnDate.split(' ')[0]}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
+
+      {/* AI Chat Panel */}
+      <AIChatPanel
+        isOpen={isAIChatOpen}
+        onClose={() => setIsAIChatOpen(false)}
+        agentType="return"
+      />
     </div>
   );
 }

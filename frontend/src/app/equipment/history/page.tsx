@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, Download, Bot, Settings } from 'lucide-react';
+import { Search, Filter, Download, Bot, Settings, MessageCircle } from 'lucide-react';
+import AIChatPanel from '@/components/AIChatPanel';
 
 interface EquipmentHistory {
   id: string;
@@ -23,8 +24,7 @@ export default function EquipmentHistoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFab, setSelectedFab] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
-  const [aiAnalysis, setAiAnalysis] = useState('');
-  const [showAiPanel, setShowAiPanel] = useState(false);
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   // Mock data
   useEffect(() => {
@@ -84,46 +84,6 @@ export default function EquipmentHistoryPage() {
     setEquipmentData(mockData);
   }, []);
 
-  const handleAiAnalysis = async () => {
-    setShowAiPanel(true);
-    setLoading(true);
-    
-    setTimeout(() => {
-      setAiAnalysis(`
-🤖 설비 이력 AI 분석:
-
-📊 설비 가동 현황:
-- 총 ${equipmentData.length}건의 작업 이력
-- 완료: ${equipmentData.filter(eq => eq.status === '완료').length}건
-- 진행중: ${equipmentData.filter(eq => eq.status === '진행중').length}건
-
-⏱️ 작업 시간 분석:
-- 평균 작업 시간: 2.5시간
-- 최장 작업: ETCH-002 (4시간 30분)
-- 최단 작업: CMP-001 (1시간)
-
-⚠️ 주요 이슈:
-1. DEP-003: CVD 공정에서 오류 발생
-   - 원인: 가스 공급 시스템 이상
-   - 조치: 즉시 엔지니어 파견 필요
-
-⚠️ 주의 사항:
-1. CMP-001: 1개 알람 - 소모품 교체 시기 임박
-2. 전체 평균 가동률 저조 - 스케줄링 최적화 필요
-
-💡 효율성 개선 제안:
-- LITHO-001 높은 가동률 → 추가 LOT 투입 가능
-- CMP-001 유휴 상태 → 대기 LOT 배정 검토
-- 예방 정비 스케줄 조정으로 가동률 10% 향상 가능
-
-🔧 정비 계획:
-- DEP-003: 정기 정비 완료 예정 (8/2)
-- ETCH-002: 긴급 정비 후 8/5 정기 정비 앞당김 권장
-      `);
-      setLoading(false);
-    }, 2000);
-  };
-
   const filteredData = equipmentData.filter(equipment => {
     const matchesSearch = equipment.equipmentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          equipment.equipmentName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -160,10 +120,10 @@ export default function EquipmentHistoryPage() {
             <p className="text-gray-600 mt-2">설비 작업 이력 및 성능 분석</p>
           </div>
           <button
-            onClick={handleAiAnalysis}
+            onClick={() => setIsAIChatOpen(true)}
             className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            <Bot className="w-5 h-5" />
+            <MessageCircle className="w-5 h-5" />
             <span>AI 분석</span>
           </button>
         </div>
@@ -228,115 +188,91 @@ export default function EquipmentHistoryPage() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Data Table */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  설비 이력 ({filteredData.length}건)
-                </h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        설비 ID
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        설비명
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        팹
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        작업
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        LOT
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        상태
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        결과
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        소요시간
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredData.map((equipment) => (
-                      <tr key={equipment.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          <div className="flex items-center space-x-2">
-                            <Settings className="w-4 h-4 text-gray-400" />
-                            <span>{equipment.equipmentId}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {equipment.equipmentName}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {equipment.fab}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {equipment.operation}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {equipment.lotNumber}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(equipment.status)}`}>
-                            {equipment.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getResultColor(equipment.result)}`}>
-                            {equipment.result}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {equipment.duration}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+        {/* Data Table */}
+        <div className="bg-white rounded-lg shadow">
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">
+              설비 이력 ({filteredData.length}건)
+            </h3>
           </div>
-
-          {/* AI Analysis Panel */}
-          {showAiPanel && (
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow">
-                <div className="p-6 border-b border-gray-200">
-                  <div className="flex items-center space-x-2">
-                    <Bot className="w-5 h-5 text-blue-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">AI 분석</h3>
-                  </div>
-                </div>
-                <div className="p-6">
-                  {loading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    </div>
-                  ) : (
-                    <div className="prose prose-sm max-w-none">
-                      <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">
-                        {aiAnalysis}
-                      </pre>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    설비 ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    설비명
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    팹
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    작업
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    LOT
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    상태
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    결과
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    소요시간
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredData.map((equipment) => (
+                  <tr key={equipment.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <div className="flex items-center space-x-2">
+                        <Settings className="w-4 h-4 text-gray-400" />
+                        <span>{equipment.equipmentId}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {equipment.equipmentName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {equipment.fab}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {equipment.operation}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {equipment.lotNumber}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(equipment.status)}`}>
+                        {equipment.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getResultColor(equipment.result)}`}>
+                        {equipment.result}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {equipment.duration}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
+
+      {/* AI Chat Panel */}
+      <AIChatPanel
+        isOpen={isAIChatOpen}
+        onClose={() => setIsAIChatOpen(false)}
+        agentType="equipment"
+      />
     </div>
   );
 }

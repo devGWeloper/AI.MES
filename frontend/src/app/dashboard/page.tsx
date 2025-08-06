@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { Bot, Factory, BarChart3, Settings, Zap, Package, Truck, Activity, History } from 'lucide-react';
+import AIChatPanel from '@/components/AIChatPanel';
 
 export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   const dashboardCards = [
     {
@@ -32,7 +34,7 @@ export default function Dashboard() {
       icon: <Bot className="w-8 h-8 text-orange-600" />,
       title: 'AI 분석',
       description: 'AI 기반 데이터 분석',
-      path: '/ai-analysis',
+      onClick: () => setIsAIChatOpen(true),
       color: 'bg-orange-50 hover:bg-orange-100'
     }
   ];
@@ -106,7 +108,13 @@ export default function Dashboard() {
             <div 
               key={index}
               className={`${card.color} rounded-xl p-6 cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md`}
-              onClick={() => window.location.href = card.path}
+              onClick={() => {
+                if (card.onClick) {
+                  card.onClick();
+                } else if (card.path) {
+                  window.location.href = card.path;
+                }
+              }}
             >
               <div className="mb-4">
                 {card.icon}
@@ -155,6 +163,13 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* AI Chat Panel */}
+      <AIChatPanel
+        isOpen={isAIChatOpen}
+        onClose={() => setIsAIChatOpen(false)}
+        agentType="general"
+      />
     </div>
   );
 } 

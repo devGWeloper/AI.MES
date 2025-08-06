@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCw, Activity, Bot, AlertTriangle, Settings, Clock } from 'lucide-react';
+import { RefreshCw, Activity, Bot, AlertTriangle, Settings, Clock, MessageCircle } from 'lucide-react';
+import AIChatPanel from '@/components/AIChatPanel';
 
 interface EquipmentStatus {
   id: string;
@@ -25,8 +26,7 @@ export default function EquipmentStatusPage() {
   const [loading, setLoading] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [selectedFab, setSelectedFab] = useState('all');
-  const [aiInsights, setAiInsights] = useState('');
-  const [showAiPanel, setShowAiPanel] = useState(false);
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   // Mock real-time data
   useEffect(() => {
@@ -107,42 +107,6 @@ export default function EquipmentStatusPage() {
     }, 1000);
   };
 
-  const handleAiInsights = async () => {
-    setShowAiPanel(true);
-    setLoading(true);
-    
-    setTimeout(() => {
-      setAiInsights(`
-🤖 실시간 설비 상태 AI 분석:
-
-📊 설비 가동 현황:
-- 총 ${equipmentStatuses.length}개 설비 중 가동 중: ${equipmentStatuses.filter(eq => eq.status === 'running').length}개
-- 평균 가동률: ${(equipmentStatuses.reduce((sum, eq) => sum + eq.utilization, 0) / equipmentStatuses.length).toFixed(1)}%
-- 총 알람: ${equipmentStatuses.reduce((sum, eq) => sum + eq.alerts, 0)}개
-
-🚨 긴급 조치 필요:
-1. DEP-003: 오류 상태 - 즉시 엔지니어 파견 필요
-   - 온도: 28.3°C (정상 범위 초과)
-   - 알람: 3개 발생
-   - 권장: 즉시 정비 및 온도 제어 시스템 점검
-
-⚠️ 주의 사항:
-1. CMP-001: 1개 알람 - 소모품 교체 시기 임박
-2. 전체 평균 가동률 저조 - 스케줄링 최적화 필요
-
-💡 효율성 개선 제안:
-- LITHO-001 높은 가동률 → 추가 LOT 투입 가능
-- CMP-001 유휴 상태 → 대기 LOT 배정 검토
-- 예방 정비 스케줄 조정으로 가동률 10% 향상 가능
-
-🔧 정비 계획:
-- DEP-003: 정기 정비 완료 예정 (8/2)
-- ETCH-002: 긴급 정비 후 8/5 정기 정비 앞당김 권장
-      `);
-      setLoading(false);
-    }, 2000);
-  };
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'running': return <Activity className="w-5 h-5 text-green-600" />;
@@ -216,10 +180,10 @@ export default function EquipmentStatusPage() {
               <span>새로고침</span>
             </button>
             <button
-              onClick={handleAiInsights}
+              onClick={() => setIsAIChatOpen(true)}
               className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
             >
-              <Bot className="w-5 h-5" />
+              <MessageCircle className="w-5 h-5" />
               <span>AI 분석</span>
             </button>
           </div>
@@ -268,113 +232,91 @@ export default function EquipmentStatusPage() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Equipment Status Cards */}
-          <div className="lg:col-span-2 space-y-4">
-            {filteredData.map((equipment) => (
-              <div
-                key={equipment.id}
-                className={`bg-white rounded-lg shadow border-l-4 ${getStatusColor(equipment.status)} p-6`}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    {getStatusIcon(equipment.status)}
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{equipment.equipmentId}</h3>
-                      <p className="text-sm text-gray-600">{equipment.equipmentName} | {equipment.fab}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-gray-900">{equipment.utilization}%</div>
-                    <div className="text-sm text-gray-600">가동률</div>
+        {/* Equipment Status Cards */}
+        <div className="space-y-4">
+          {filteredData.map((equipment) => (
+            <div
+              key={equipment.id}
+              className={`bg-white rounded-lg shadow border-l-4 ${getStatusColor(equipment.status)} p-6`}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  {getStatusIcon(equipment.status)}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{equipment.equipmentId}</h3>
+                    <p className="text-sm text-gray-600">{equipment.equipmentName} | {equipment.fab}</p>
                   </div>
                 </div>
-
-                <div className="grid md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <div className="text-sm text-gray-600">상태</div>
-                    <div className="font-semibold text-gray-900">{getStatusText(equipment.status)}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600">현재 작업</div>
-                    <div className="font-semibold text-gray-900">{equipment.currentOperation || '-'}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600">처리 중 LOT</div>
-                    <div className="font-semibold text-gray-900">{equipment.currentLot || '-'}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-600">연속 가동시간</div>
-                    <div className="font-semibold text-gray-900">{equipment.uptime}</div>
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <div className="flex justify-between text-sm text-gray-600 mb-1">
-                    <span>가동률</span>
-                    <span>{equipment.utilization}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all duration-300 ${getUtilizationColor(equipment.utilization)}`}
-                      style={{ width: `${equipment.utilization}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <div className="text-gray-600">온도</div>
-                    <div className="font-semibold">{equipment.temperature}°C</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-600">압력</div>
-                    <div className="font-semibold">{equipment.pressure} bar</div>
-                  </div>
-                  <div>
-                    <div className="text-gray-600">알람</div>
-                    <div className={`font-semibold ${equipment.alerts > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                      {equipment.alerts}개
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-between text-sm text-gray-600 mt-4 pt-4 border-t border-gray-200">
-                  <span>마지막 정비: {equipment.lastMaintenance}</span>
-                  <span>다음 정비: {equipment.nextMaintenance}</span>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-gray-900">{equipment.utilization}%</div>
+                  <div className="text-sm text-gray-600">가동률</div>
                 </div>
               </div>
-            ))}
-          </div>
 
-          {/* AI Insights Panel */}
-          {showAiPanel && (
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow">
-                <div className="p-6 border-b border-gray-200">
-                  <div className="flex items-center space-x-2">
-                    <Bot className="w-5 h-5 text-blue-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">AI 분석</h3>
+              <div className="grid md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <div className="text-sm text-gray-600">상태</div>
+                  <div className="font-semibold text-gray-900">{getStatusText(equipment.status)}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">현재 작업</div>
+                  <div className="font-semibold text-gray-900">{equipment.currentOperation || '-'}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">처리 중 LOT</div>
+                  <div className="font-semibold text-gray-900">{equipment.currentLot || '-'}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">연속 가동시간</div>
+                  <div className="font-semibold text-gray-900">{equipment.uptime}</div>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <div className="flex justify-between text-sm text-gray-600 mb-1">
+                  <span>가동률</span>
+                  <span>{equipment.utilization}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full transition-all duration-300 ${getUtilizationColor(equipment.utilization)}`}
+                    style={{ width: `${equipment.utilization}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <div className="text-gray-600">온도</div>
+                  <div className="font-semibold">{equipment.temperature}°C</div>
+                </div>
+                <div>
+                  <div className="text-gray-600">압력</div>
+                  <div className="font-semibold">{equipment.pressure} bar</div>
+                </div>
+                <div>
+                  <div className="text-gray-600">알람</div>
+                  <div className={`font-semibold ${equipment.alerts > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {equipment.alerts}개
                   </div>
                 </div>
-                <div className="p-6">
-                  {loading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    </div>
-                  ) : (
-                    <div className="prose prose-sm max-w-none">
-                      <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">
-                        {aiInsights}
-                      </pre>
-                    </div>
-                  )}
-                </div>
+              </div>
+
+              <div className="flex justify-between text-sm text-gray-600 mt-4 pt-4 border-t border-gray-200">
+                <span>마지막 정비: {equipment.lastMaintenance}</span>
+                <span>다음 정비: {equipment.nextMaintenance}</span>
               </div>
             </div>
-          )}
+          ))}
         </div>
       </div>
+
+      {/* AI Chat Panel */}
+      <AIChatPanel
+        isOpen={isAIChatOpen}
+        onClose={() => setIsAIChatOpen(false)}
+        agentType="equipment"
+      />
     </div>
   );
 }
