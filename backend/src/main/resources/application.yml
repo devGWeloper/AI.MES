@@ -10,6 +10,10 @@ spring:
   profiles:
     active: local
   
+  # Environment Variables Configuration
+  config:
+    import: optional:file:.env.local
+  
   jackson:
     time-zone: Asia/Seoul
     date-format: yyyy-MM-dd HH:mm:ss
@@ -64,24 +68,42 @@ spring:
   datasource:
     # M14 Fab Database
     m14:
-      jdbc-url: jdbc:oracle:thin:@localhost:1521:M14DB
-      username: m14_user
-      password: m14_password
-      driver-class-name: oracle.jdbc.OracleDriver
+      jdbc-url: ${M14_DB_URL}
+      username: ${M14_DB_USERNAME}
+      password: ${M14_DB_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+      # PostgreSQL 연결 풀 설정
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
       
     # M15 Fab Database  
     m15:
-      jdbc-url: jdbc:oracle:thin:@localhost:1521:M15DB
-      username: m15_user
-      password: m15_password
-      driver-class-name: oracle.jdbc.OracleDriver
+      jdbc-url: ${M15_DB_URL}
+      username: ${M15_DB_USERNAME}
+      password: ${M15_DB_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+      # PostgreSQL 연결 풀 설정
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
       
     # M16 Fab Database
     m16:
-      jdbc-url: jdbc:oracle:thin:@localhost:1521:M16DB
-      username: m16_user
-      password: m16_password
-      driver-class-name: oracle.jdbc.OracleDriver
+      jdbc-url: ${M16_DB_URL}
+      username: ${M16_DB_USERNAME}
+      password: ${M16_DB_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+      # PostgreSQL 연결 풀 설정
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
 
 ---
 # Production Profile
@@ -96,18 +118,36 @@ spring:
       jdbc-url: ${M14_DB_URL}
       username: ${M14_DB_USERNAME}
       password: ${M14_DB_PASSWORD}
-      driver-class-name: oracle.jdbc.OracleDriver
+      driver-class-name: org.postgresql.Driver
+      # PostgreSQL 연결 풀 설정
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
       
     # M15 Fab Database  
     m15:
       jdbc-url: ${M15_DB_URL}
       username: ${M15_DB_USERNAME}
       password: ${M15_DB_PASSWORD}
-      driver-class-name: oracle.jdbc.OracleDriver
+      driver-class-name: org.postgresql.Driver
+      # PostgreSQL 연결 풀 설정
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
       
     # M16 Fab Database
     m16:
       jdbc-url: ${M16_DB_URL}
       username: ${M16_DB_USERNAME}
       password: ${M16_DB_PASSWORD}
-      driver-class-name: oracle.jdbc.OracleDriver
+      driver-class-name: org.postgresql.Driver
+      # PostgreSQL 연결 풀 설정
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000

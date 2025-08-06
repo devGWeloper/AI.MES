@@ -27,7 +27,19 @@ public class DatabaseConfig {
         @Bean(name = "m14DataSourceProperties")
         @ConfigurationProperties("spring.datasource.m14")
         public HikariConfig m14DataSourceProperties() {
-            return new HikariConfig();
+            HikariConfig config = new HikariConfig();
+            // PostgreSQL 최적화 설정
+            config.addDataSourceProperty("cachePrepStmts", "true");
+            config.addDataSourceProperty("prepStmtCacheSize", "250");
+            config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+            config.addDataSourceProperty("useServerPrepStmts", "true");
+            config.addDataSourceProperty("useLocalSessionState", "true");
+            config.addDataSourceProperty("rewriteBatchedStatements", "true");
+            config.addDataSourceProperty("cacheResultSetMetadata", "true");
+            config.addDataSourceProperty("cacheServerConfiguration", "true");
+            config.addDataSourceProperty("elideSetAutoCommits", "true");
+            config.addDataSourceProperty("maintainTimeStats", "false");
+            return config;
         }
 
         @Bean(name = "m14DataSource")
@@ -64,7 +76,19 @@ public class DatabaseConfig {
         @Bean(name = "m15DataSourceProperties")
         @ConfigurationProperties("spring.datasource.m15")
         public HikariConfig m15DataSourceProperties() {
-            return new HikariConfig();
+            HikariConfig config = new HikariConfig();
+            // PostgreSQL 최적화 설정
+            config.addDataSourceProperty("cachePrepStmts", "true");
+            config.addDataSourceProperty("prepStmtCacheSize", "250");
+            config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+            config.addDataSourceProperty("useServerPrepStmts", "true");
+            config.addDataSourceProperty("useLocalSessionState", "true");
+            config.addDataSourceProperty("rewriteBatchedStatements", "true");
+            config.addDataSourceProperty("cacheResultSetMetadata", "true");
+            config.addDataSourceProperty("cacheServerConfiguration", "true");
+            config.addDataSourceProperty("elideSetAutoCommits", "true");
+            config.addDataSourceProperty("maintainTimeStats", "false");
+            return config;
         }
 
         @Bean(name = "m15DataSource")
@@ -101,7 +125,19 @@ public class DatabaseConfig {
         @Bean(name = "m16DataSourceProperties")
         @ConfigurationProperties("spring.datasource.m16")
         public HikariConfig m16DataSourceProperties() {
-            return new HikariConfig();
+            HikariConfig config = new HikariConfig();
+            // PostgreSQL 최적화 설정
+            config.addDataSourceProperty("cachePrepStmts", "true");
+            config.addDataSourceProperty("prepStmtCacheSize", "250");
+            config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+            config.addDataSourceProperty("useServerPrepStmts", "true");
+            config.addDataSourceProperty("useLocalSessionState", "true");
+            config.addDataSourceProperty("rewriteBatchedStatements", "true");
+            config.addDataSourceProperty("cacheResultSetMetadata", "true");
+            config.addDataSourceProperty("cacheServerConfiguration", "true");
+            config.addDataSourceProperty("elideSetAutoCommits", "true");
+            config.addDataSourceProperty("maintainTimeStats", "false");
+            return config;
         }
 
         @Bean(name = "m16DataSource")  

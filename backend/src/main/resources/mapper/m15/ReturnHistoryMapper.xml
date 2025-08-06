@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ai.mes.mapper.m15.ReturnHistoryMapper">
+
+    <!-- 결과 매핑 -->
+    <resultMap id="ReturnHistoryResultMap" type="com.ai.mes.model.ReturnHistory">
+        <id column="id" property="id" />
+        <result column="return_id" property="returnId" />
+        <result column="lot_number" property="lotNumber" />
+        <result column="product" property="product" />
+        <result column="fab" property="fab" />
+        <result column="return_reason" property="returnReason" />
+        <result column="return_step" property="returnStep" />
+        <result column="return_date" property="returnDate" />
+        <result column="return_by" property="returnBy" />
+        <result column="target_step" property="targetStep" />
+        <result column="status" property="status" />
+        <result column="severity" property="severity" />
+        <result column="resolved_date" property="resolvedDate" />
+        <result column="comments" property="comments" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+    </resultMap>
+
+    <!-- 기본 CRUD 쿼리 -->
+    <select id="selectAll" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 ORDER BY created_at DESC
+    </select>
+
+    <select id="selectById" parameterType="string" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 WHERE id = #{id}
+    </select>
+
+    <select id="selectByReturnId" parameterType="string" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 WHERE return_id = #{returnId} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByLotNumber" parameterType="string" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 WHERE lot_number = #{lotNumber} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByFab" parameterType="string" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 WHERE fab = #{fab} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByStatus" parameterType="string" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 WHERE status = #{status} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByProduct" parameterType="string" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 WHERE product = #{product} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByDateRange" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 
+        WHERE created_at BETWEEN #{startDate} AND #{endDate} 
+        ORDER BY created_at DESC
+    </select>
+
+    <insert id="insert" parameterType="com.ai.mes.model.ReturnHistory">
+        INSERT INTO return_history_m15 (
+            id, return_id, lot_number, product, fab, return_reason, return_step,
+            return_date, return_by, target_step, status, severity, resolved_date,
+            comments, created_at, updated_at
+        ) VALUES (
+            #{id}, #{returnId}, #{lotNumber}, #{product}, #{fab}, #{returnReason}, #{returnStep},
+            #{returnDate}, #{returnBy}, #{targetStep}, #{status}, #{severity}, #{resolvedDate},
+            #{comments}, #{createdAt}, #{updatedAt}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.ai.mes.model.ReturnHistory">
+        UPDATE return_history_m15 SET
+            return_id = #{returnId},
+            lot_number = #{lotNumber},
+            product = #{product},
+            fab = #{fab},
+            return_reason = #{returnReason},
+            return_step = #{returnStep},
+            return_date = #{returnDate},
+            return_by = #{returnBy},
+            target_step = #{targetStep},
+            status = #{status},
+            severity = #{severity},
+            resolved_date = #{resolvedDate},
+            comments = #{comments},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="string">
+        DELETE FROM return_history_m15 WHERE id = #{id}
+    </delete>
+
+    <!-- 반품 관련 쿼리 -->
+    <select id="selectByReturnReason" parameterType="string" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 WHERE return_reason = #{returnReason} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByReturnStep" parameterType="string" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 WHERE return_step = #{returnStep} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByReturnBy" parameterType="string" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 WHERE return_by = #{returnBy} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByTargetStep" parameterType="string" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 WHERE target_step = #{targetStep} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectBySeverity" parameterType="string" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 WHERE severity = #{severity} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByReturnDate" parameterType="java.time.LocalDateTime" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 
+        WHERE DATE(return_date) = DATE(#{returnDate})
+        ORDER BY return_date DESC
+    </select>
+
+    <select id="selectByResolvedDate" parameterType="java.time.LocalDateTime" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 
+        WHERE DATE(resolved_date) = DATE(#{resolvedDate})
+        ORDER BY resolved_date DESC
+    </select>
+
+    <!-- 복합 조건 검색 -->
+    <select id="selectByMultipleConditions" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 
+        <where>
+            <if test="fab != null and fab != ''">
+                AND fab = #{fab}
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+            <if test="product != null and product != ''">
+                AND product = #{product}
+            </if>
+            <if test="returnReason != null and returnReason != ''">
+                AND return_reason = #{returnReason}
+            </if>
+            <if test="startDate != null">
+                AND created_at <![CDATA[>=]]> #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND created_at <![CDATA[<=]]> #{endDate}
+            </if>
+        </where>
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 해결되지 않은 반품 이력 -->
+    <select id="selectUnresolvedReturns" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 
+        WHERE status != 'RESOLVED' AND status != 'CLOSED'
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 특정 기간 내 반품 이력 -->
+    <select id="selectByReturnDateRange" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 
+        WHERE return_date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY return_date DESC
+    </select>
+
+    <!-- 특정 기간 내 해결된 반품 이력 -->
+    <select id="selectByResolvedDateRange" resultMap="ReturnHistoryResultMap">
+        SELECT * FROM return_history_m15 
+        WHERE resolved_date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY resolved_date DESC
+    </select>
+
+</mapper> 

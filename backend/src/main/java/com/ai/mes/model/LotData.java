@@ -3,12 +3,14 @@ package com.ai.mes.model;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Slf4j
 public class LotData {
     private String id;
     private String lotNumber;

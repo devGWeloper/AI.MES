@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ai.mes.mapper.m14.LotDataMapper">
+
+    <!-- 결과 매핑 -->
+    <resultMap id="LotDataResultMap" type="com.ai.mes.model.LotData">
+        <id column="id" property="id" />
+        <result column="lot_number" property="lotNumber" />
+        <result column="product" property="product" />
+        <result column="fab" property="fab" />
+        <result column="status" property="status" />
+        <result column="start_time" property="startTime" />
+        <result column="end_time" property="endTime" />
+        <result column="step" property="step" />
+        <result column="equipment" property="equipment" />
+        <result column="progress" property="progress" />
+        <result column="estimated_completion" property="estimatedCompletion" />
+        <result column="duration" property="duration" />
+        <result column="result" property="result" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+    </resultMap>
+
+    <!-- 기본 CRUD 쿼리 -->
+    <select id="selectAll" resultMap="LotDataResultMap">
+        SELECT * FROM lot_data_m14 ORDER BY created_at DESC
+    </select>
+
+    <select id="selectById" parameterType="string" resultMap="LotDataResultMap">
+        SELECT * FROM lot_data_m14 WHERE id = #{id}
+    </select>
+
+    <select id="selectByLotNumber" parameterType="string" resultMap="LotDataResultMap">
+        SELECT * FROM lot_data_m14 WHERE lot_number = #{lotNumber} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByFab" parameterType="string" resultMap="LotDataResultMap">
+        SELECT * FROM lot_data_m14 WHERE fab = #{fab} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByStatus" parameterType="string" resultMap="LotDataResultMap">
+        SELECT * FROM lot_data_m14 WHERE status = #{status} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByProduct" parameterType="string" resultMap="LotDataResultMap">
+        SELECT * FROM lot_data_m14 WHERE product = #{product} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByDateRange" resultMap="LotDataResultMap">
+        SELECT * FROM lot_data_m14 
+        WHERE created_at BETWEEN #{startDate} AND #{endDate} 
+        ORDER BY created_at DESC
+    </select>
+
+    <insert id="insert" parameterType="com.ai.mes.model.LotData">
+        INSERT INTO lot_data_m14 (
+            id, lot_number, product, fab, status, start_time, end_time, 
+            step, equipment, progress, estimated_completion, duration, 
+            result, created_at, updated_at
+        ) VALUES (
+            #{id}, #{lotNumber}, #{product}, #{fab}, #{status}, #{startTime}, #{endTime},
+            #{step}, #{equipment}, #{progress}, #{estimatedCompletion}, #{duration},
+            #{result}, #{createdAt}, #{updatedAt}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.ai.mes.model.LotData">
+        UPDATE lot_data_m14 SET
+            lot_number = #{lotNumber},
+            product = #{product},
+            fab = #{fab},
+            status = #{status},
+            start_time = #{startTime},
+            end_time = #{endTime},
+            step = #{step},
+            equipment = #{equipment},
+            progress = #{progress},
+            estimated_completion = #{estimatedCompletion},
+            duration = #{duration},
+            result = #{result},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="string">
+        DELETE FROM lot_data_m14 WHERE id = #{id}
+    </delete>
+
+    <!-- 공정 관련 쿼리 -->
+    <select id="selectByStep" parameterType="string" resultMap="LotDataResultMap">
+        SELECT * FROM lot_data_m14 WHERE step = #{step} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByEquipment" parameterType="string" resultMap="LotDataResultMap">
+        SELECT * FROM lot_data_m14 WHERE equipment = #{equipment} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByProgressRange" resultMap="LotDataResultMap">
+        SELECT * FROM lot_data_m14 
+        WHERE progress BETWEEN #{minProgress} AND #{maxProgress}
+        ORDER BY progress DESC
+    </select>
+
+    <select id="selectByEstimatedCompletion" parameterType="java.time.LocalDateTime" resultMap="LotDataResultMap">
+        SELECT * FROM lot_data_m14 
+        WHERE estimated_completion = #{estimatedCompletion}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByResult" parameterType="string" resultMap="LotDataResultMap">
+        SELECT * FROM lot_data_m14 WHERE result = #{result} ORDER BY created_at DESC
+    </select>
+
+    <!-- 복합 조건 검색 -->
+    <select id="selectByMultipleConditions" resultMap="LotDataResultMap">
+        SELECT * FROM lot_data_m14 
+        <where>
+            <if test="fab != null and fab != ''">
+                AND fab = #{fab}
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+            <if test="product != null and product != ''">
+                AND product = #{product}
+            </if>
+            <if test="step != null and step != ''">
+                AND step = #{step}
+            </if>
+            <if test="startDate != null">
+                AND created_at <![CDATA[>=]]> #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND created_at <![CDATA[<=]]> #{endDate}
+            </if>
+        </where>
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 진행률 기반 검색 -->
+    <select id="selectByProgressStatus" parameterType="integer" resultMap="LotDataResultMap">
+        SELECT * FROM lot_data_m14 WHERE progress = #{progress} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByDurationRange" resultMap="LotDataResultMap">
+        SELECT * FROM lot_data_m14 
+        WHERE duration BETWEEN #{minDuration} AND #{maxDuration}
+        ORDER BY duration DESC
+    </select>
+
+</mapper> 

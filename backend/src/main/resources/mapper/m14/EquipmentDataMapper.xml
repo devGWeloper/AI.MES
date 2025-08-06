@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ai.mes.mapper.m14.EquipmentDataMapper">
+
+    <!-- 결과 매핑 -->
+    <resultMap id="EquipmentDataResultMap" type="com.ai.mes.model.EquipmentData">
+        <id column="id" property="id" />
+        <result column="equipment_id" property="equipmentId" />
+        <result column="equipment_name" property="equipmentName" />
+        <result column="fab" property="fab" />
+        <result column="status" property="status" />
+        <result column="current_operation" property="currentOperation" />
+        <result column="current_lot" property="currentLot" />
+        <result column="utilization" property="utilization" />
+        <result column="last_maintenance" property="lastMaintenance" />
+        <result column="next_maintenance" property="nextMaintenance" />
+        <result column="temperature" property="temperature" />
+        <result column="pressure" property="pressure" />
+        <result column="uptime" property="uptime" />
+        <result column="alerts" property="alerts" />
+        <result column="operation" property="operation" />
+        <result column="start_time" property="startTime" />
+        <result column="end_time" property="endTime" />
+        <result column="duration" property="duration" />
+        <result column="lot_number" property="lotNumber" />
+        <result column="result" property="result" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+    </resultMap>
+
+    <!-- 기본 CRUD 쿼리 -->
+    <select id="selectAll" resultMap="EquipmentDataResultMap">
+        SELECT * FROM equipment_data_m14 ORDER BY created_at DESC
+    </select>
+
+    <select id="selectById" parameterType="string" resultMap="EquipmentDataResultMap">
+        SELECT * FROM equipment_data_m14 WHERE id = #{id}
+    </select>
+
+    <select id="selectByEquipmentId" parameterType="string" resultMap="EquipmentDataResultMap">
+        SELECT * FROM equipment_data_m14 WHERE equipment_id = #{equipmentId} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByFab" parameterType="string" resultMap="EquipmentDataResultMap">
+        SELECT * FROM equipment_data_m14 WHERE fab = #{fab} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByStatus" parameterType="string" resultMap="EquipmentDataResultMap">
+        SELECT * FROM equipment_data_m14 WHERE status = #{status} ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByDateRange" resultMap="EquipmentDataResultMap">
+        <![CDATA[
+        SELECT * FROM equipment_data_m14 
+        WHERE created_at BETWEEN #{startDate} AND #{endDate} 
+        ORDER BY created_at DESC
+        ]]>
+    </select>
+
+    <insert id="insert" parameterType="com.ai.mes.model.EquipmentData">
+        INSERT INTO equipment_data_m14 (
+            id, equipment_id, equipment_name, fab, status, current_operation, 
+            current_lot, utilization, last_maintenance, next_maintenance, 
+            temperature, pressure, uptime, alerts, operation, start_time, 
+            end_time, duration, lot_number, result, created_at, updated_at
+        ) VALUES (
+            #{id}, #{equipmentId}, #{equipmentName}, #{fab}, #{status}, #{currentOperation},
+            #{currentLot}, #{utilization}, #{lastMaintenance}, #{nextMaintenance},
+            #{temperature}, #{pressure}, #{uptime}, #{alerts}, #{operation}, #{startTime},
+            #{endTime}, #{duration}, #{lotNumber}, #{result}, #{createdAt}, #{updatedAt}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.ai.mes.model.EquipmentData">
+        UPDATE equipment_data_m14 SET
+            equipment_id = #{equipmentId},
+            equipment_name = #{equipmentName},
+            fab = #{fab},
+            status = #{status},
+            current_operation = #{currentOperation},
+            current_lot = #{currentLot},
+            utilization = #{utilization},
+            last_maintenance = #{lastMaintenance},
+            next_maintenance = #{nextMaintenance},
+            temperature = #{temperature},
+            pressure = #{pressure},
+            uptime = #{uptime},
+            alerts = #{alerts},
+            operation = #{operation},
+            start_time = #{startTime},
+            end_time = #{endTime},
+            duration = #{duration},
+            lot_number = #{lotNumber},
+            result = #{result},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="string">
+        DELETE FROM equipment_data_m14 WHERE id = #{id}
+    </delete>
+
+    <!-- 통계 및 분석 쿼리 -->
+    <select id="selectByUtilizationRange" resultMap="EquipmentDataResultMap">
+        <![CDATA[
+        SELECT * FROM equipment_data_m14 
+        WHERE utilization BETWEEN #{minUtilization} AND #{maxUtilization}
+        ORDER BY utilization DESC
+        ]]>
+    </select>
+
+    <select id="selectByTemperatureRange" resultMap="EquipmentDataResultMap">
+        SELECT * FROM equipment_data_m14 
+        WHERE temperature BETWEEN #{minTemperature} AND #{maxTemperature}
+        ORDER BY temperature DESC
+    </select>
+
+    <select id="selectByPressureRange" resultMap="EquipmentDataResultMap">
+        SELECT * FROM equipment_data_m14 
+        WHERE pressure BETWEEN #{minPressure} AND #{maxPressure}
+        ORDER BY pressure DESC
+    </select>
+
+    <select id="selectByMaintenanceDate" parameterType="java.time.LocalDateTime" resultMap="EquipmentDataResultMap">
+        SELECT * FROM equipment_data_m14 
+        WHERE DATE(last_maintenance) = DATE(#{maintenanceDate})
+        ORDER BY last_maintenance DESC
+    </select>
+
+    <select id="selectByCurrentOperation" parameterType="string" resultMap="EquipmentDataResultMap">
+        SELECT * FROM equipment_data_m14 
+        WHERE current_operation = #{currentOperation}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="selectByCurrentLot" parameterType="string" resultMap="EquipmentDataResultMap">
+        SELECT * FROM equipment_data_m14 
+        WHERE current_lot = #{currentLot}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 복합 조건 검색 -->
+    <select id="selectByMultipleConditions" resultMap="EquipmentDataResultMap">
+        SELECT * FROM equipment_data_m14 
+        <where>
+            <if test="fab != null and fab != ''">
+                AND fab = #{fab}
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+            <if test="currentOperation != null and currentOperation != ''">
+                AND current_operation = #{currentOperation}
+            </if>
+            <if test="startDate != null">
+                AND created_at <![CDATA[>=]]> #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND created_at <![CDATA[<=]]> #{endDate}
+            </if>
+        </where>
+        ORDER BY created_at DESC
+    </select>
+
+</mapper> 
