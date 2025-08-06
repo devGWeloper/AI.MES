@@ -47,7 +47,7 @@ export default function Home() {
           </p>
           <button 
             className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 shadow-lg"
-            onClick={() => window.location.href = '/lot/history'}
+            onClick={() => window.location.href = '/dashboard'}
           >
             시스템 시작하기
           </button>
