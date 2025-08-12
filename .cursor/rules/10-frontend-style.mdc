@@ -1,0 +1,27 @@
+---
+globs: frontend/**/*.{ts,tsx}
+---
+# Frontend Code Style and Design System
+
+## MUST
+- **Use TypeScript strictly**: adhere to `strict: true` (see [frontend/tsconfig.json](mdc:frontend/tsconfig.json)).
+- **Use path alias `@/*`** for imports (configured in tsconfig paths).
+- **Prefer functional components** with explicit `Props` interfaces.
+- **Use Tailwind CSS utility classes**; prefer shared tokens:
+  - Colors from `primary` scale in [frontend/tailwind.config.js](mdc:frontend/tailwind.config.js)
+  - CSS variables `--mes-bg`, `--mes-fg` from [frontend/src/app/globals.css](mdc:frontend/src/app/globals.css)
+  - Component utilities `.card`, `.card-hover`, `.btn-primary`, `.focus-ring` (same file)
+- **Accessibility**: include `role`, `aria-*`, keyboard handlers; provide visible focus via `.focus-ring`.
+- **Stateful UI must respect Reduced Motion**: query `prefers-reduced-motion` and/or toggle root `.reduced-motion` as in [Navigation.tsx](mdc:frontend/src/components/Navigation.tsx).
+- **API calls**: route through Next rewrites `/api/backend/*` and `/api/ai/*` defined in [next.config.js](mdc:frontend/next.config.js).
+
+## NEVER
+- **Do not bypass `ApiResponse<T>` contract** when consuming backend data; normalize to `{ success, data, message, error }`.
+- **Do not hardcode colors** when a Tailwind token or CSS variable exists.
+- **Do not conditionally call hooks**; perform conditional rendering only after all hooks.
+- **Do not introduce custom global CSS** if Tailwind utility or component layer can express it.
+
+## Patterns
+- Pages belong in App Router under `src/app/**/page.tsx`; shared UI in `src/components`.
+- Keep components pure; lift side-effects into hooks.
+- Prefer `className` composition over inline `style`.

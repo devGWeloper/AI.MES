@@ -1,0 +1,21 @@
+---
+alwaysApply: true
+---
+# Repository Structure and Entry Points
+
+This is a polyglot monorepo with three services. The main entry points per package are:
+
+- frontend: [frontend/src/app/layout.tsx](mdc:frontend/src/app/layout.tsx) and Next.js App Router pages under [frontend/src/app](mdc:frontend/src/app)
+- backend: Spring Boot application under [backend/src/main/java/com/ai/mes](mdc:backend/src/main/java/com/ai/mes), configuration in [backend/src/main/resources/application.yml](mdc:backend/src/main/resources/application.yml)
+- ai-service: FastAPI app at [ai-service/app/main.py](mdc:ai-service/app/main.py)
+
+Routing and composition:
+- Frontend rewrites: [frontend/next.config.js](mdc:frontend/next.config.js) maps `/api/backend/*` to the Backend and `/api/ai/*` to the AI service
+- Backend REST controllers (Swagger-annotated): [backend/src/main/java/com/ai/mes/controller](mdc:backend/src/main/java/com/ai/mes/controller)
+- Backend MyBatis mappers: [backend/src/main/resources/mapper](mdc:backend/src/main/resources/mapper)
+
+Build/Run:
+- Root scripts: [package.json](mdc:package.json)
+- Frontend scripts and deps: [frontend/package.json](mdc:frontend/package.json)
+- Backend build: [backend/pom.xml](mdc:backend/pom.xml)
+- AI service deps: [ai-service/requirements.txt](mdc:ai-service/requirements.txt)

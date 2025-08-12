@@ -1,0 +1,24 @@
+---
+globs: backend/**/*.java
+---
+# Backend API, Security, and Persistence Conventions
+
+## MUST
+- **Wrap all HTTP responses** using [ApiResponse.java](mdc:backend/src/main/java/com/ai/mes/dto/ApiResponse.java).
+- **Annotate controllers** with Swagger (`@Tag`, `@Operation`) as in [AIController.java](mdc:backend/src/main/java/com/ai/mes/controller/AIController.java).
+- **Use JWT auth**: All routes except `/auth/**`, `/swagger-ui/**`, `/v3/api-docs/**`, `/actuator/health` require authentication (see [SecurityConfig.java](mdc:backend/src/main/java/com/ai/mes/config/SecurityConfig.java)).
+- **Configure CORS** via `CorsConfigurationSource` and keep origins synced with frontend/AI.
+- **Use Lombok** for DTOs (`@Data`, `@NoArgsConstructor`, `@AllArgsConstructor`).
+- **Follow MyBatis XML layout**: `resultMap` → CRUD → analytics/filters → composite `<where>` conditions (see mappers under [resources/mapper](mdc:backend/src/main/resources/mapper)).
+- **Keep Jackson settings** in sync: timezone `Asia/Seoul`, date format, SNAKE_CASE (see [application.yml](mdc:backend/src/main/resources/application.yml)).
+
+## NEVER
+- **Never return raw entities** directly from controllers; always use `ApiResponse`.
+- **Do not log secrets or JWTs**; redact sensitive values in logs.
+- **Do not hardcode DB credentials**; use profiles + env vars.
+- **Do not mix Oracle/PostgreSQL dialect-specific SQL** in the same mapper without profiles.
+
+## Patterns
+- Stateless security: add `JwtAuthenticationFilter` before `UsernamePasswordAuthenticationFilter`.
+- Use descriptive DTOs and service boundaries; catch and translate exceptions to meaningful error messages with logs.
+- Mapper namespaces should reflect package paths; prefer camel-case mapping via MyBatis configuration.

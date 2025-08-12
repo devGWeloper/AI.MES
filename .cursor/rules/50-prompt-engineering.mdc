@@ -1,0 +1,49 @@
+---
+alwaysApply: true
+description: Prompt engineering principles tailored for AI MES agents and UI prompts
+---
+# Prompt Engineering Guide (AI MES)
+
+Optimize prompts for reliability, safety, and actionable outputs across agents (Lot, Equipment, Return) and UI chat.
+
+## MUST
+- **State role and scope explicitly**: define agent identity, domain (Lot/Equipment/Return), and task goal.
+- **Constrain output format**: request clear sections and bullet lists; include keys for `recommendations` and `alerts` when applicable.
+- **Provide concrete context**: include FAB (`M14/M15/M16`), timeframe, metrics, and any constraints.
+- **Specify language**: default to Korean output; keep technical terms consistent with UI.
+- **Set reasoning depth**: ask for concise, high-signal analysis; avoid unnecessary narrative.
+- **Include guardrails**: request uncertainty notes, data assumptions, and next steps.
+- **Use few-shot examples** when patterns are important (e.g., status vs performance vs maintenance analyses).
+- **Ask for verifiable outputs**: where possible, suggest checks or SQL-like filters to reproduce findings.
+
+## NEVER
+- **Do not reveal credentials or internal configuration** (API keys, JWT, DB URLs).
+- **Do not fabricate data**: if data is missing, explain what is needed and provide a placeholder analysis structure.
+- **Do not output unbounded text**: keep within practical token limits and provide summaries first.
+- **Do not deviate from the requested language** unless asked.
+
+## Prompt Patterns
+- Analysis prompt skeleton:
+```
+You are an AI MES {agent_type} agent. Analyze the provided context and data.
+
+Goals:
+- Summarize current status
+- Identify anomalies/bottlenecks
+- Provide actionable recommendations (ops + engineering)
+- Flag alerts (severity, impacted lots/equipment)
+
+Constraints:
+- Output in Korean
+- Use concise bullet lists; avoid fluff
+- Include sections: Summary, Findings, Recommendations, Alerts, Next Steps
+
+Context:
+- FAB: {fab}
+- Timeframe: {timeframe}
+- Metrics: {metrics}
+- Additional Data: {data}
+```
+
+- Chain-of-Thought surrogate (lightweight): ask for “key factors considered” as a short list without revealing internal chain.
+- Self-check step: end with a brief validation checklist (“what might be wrong or missing”).

@@ -1,0 +1,19 @@
+---
+alwaysApply: true
+---
+# Cross-Service API Contracts
+
+## MUST
+- **Backend responses** use [ApiResponse.java](mdc:backend/src/main/java/com/ai/mes/dto/ApiResponse.java): `{ success, data, message, error }`.
+- **AI service responses** use [AnalysisResponse](mdc:ai-service/app/models/schemas.py) for `/api/analyze/*`.
+- **Frontend clients** must normalize responses to shared TypeScript types in [frontend/src/types/index.ts](mdc:frontend/src/types/index.ts).
+- **Use Next.js rewrites** from [frontend/next.config.js](mdc:frontend/next.config.js) to call backend/AI service.
+
+## NEVER
+- **Never bypass the response envelope** in the backend.
+- **Do not expose internal exceptions**; convert to friendly `message` and `error` fields.
+- **Never hardcode service URLs** in frontend; rely on rewrites.
+
+## Patterns
+- Prefer typed clients (e.g., Axios with generics) and narrow DTOs per screen.
+- Timezone and date formats should match backend Jackson settings.

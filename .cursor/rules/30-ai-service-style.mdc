@@ -1,0 +1,21 @@
+---
+globs: ai-service/**/*.py
+---
+# AI Service (FastAPI + LangChain) Conventions
+
+## MUST
+- **Expose analysis endpoints under `/api/analyze/*`** returning [AnalysisResponse](mdc:ai-service/app/models/schemas.py).
+- **Initialize agents in app lifespan** and guard runtime with `_ensure_initialized()` (see [app/main.py](mdc:ai-service/app/main.py), [analysis_service.py](mdc:ai-service/app/services/analysis_service.py)).
+- **Structured logging** via `structlog` with contextual keys (`type`, `fab`, `context`).
+- **Use `pydantic-settings`** for configuration and `.env` (see [config.py](mdc:ai-service/app/core/config.py)).
+- **Respect CORS origins** in settings.
+
+## NEVER
+- **Never call OpenAI without an API key check**; fail fast with a clear error.
+- **Do not return raw LLM output** without post-processing; extract `recommendations`/`alerts` using `_extract_insights`.
+- **Do not perform blocking I/O in request handlers**; prefer async tools/clients.
+
+## Patterns
+- Use `BaseAgent` with `create_openai_tools_agent` and `AgentExecutor` (verbose, bounded iterations).
+- Route `type`-driven analysis to specialized methods: `status`, `history`, `performance`, `maintenance`, etc.
+- Keep prompts/toolsets in dedicated agent modules and keep inputs explicit (`context`, optional `data`).
