@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -15,6 +16,11 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ReturnService {
+
+    // 각 팹 별 MyBatis Mapper 주입
+    private final com.ai.mes.mapper.m14.ReturnHistoryMapper m14ReturnHistoryMapper;
+    private final com.ai.mes.mapper.m15.ReturnHistoryMapper m15ReturnHistoryMapper;
+    private final com.ai.mes.mapper.m16.ReturnHistoryMapper m16ReturnHistoryMapper;
 
     // Mock data for development - replace with actual database calls
     private List<ReturnHistory> getMockReturnData() {
@@ -43,17 +49,43 @@ public class ReturnService {
         return mockData;
     }
 
-    public List<ReturnHistory> getReturnHistory(String fab) {
-        log.info("Getting return history for fab: {}", fab);
-        List<ReturnHistory> allReturns = getMockReturnData();
-        
-        if (fab != null && !fab.isEmpty()) {
-            return allReturns.stream()
-                    .filter(returnHistory -> fab.equals(returnHistory.getFab()))
-                    .collect(Collectors.toList());
+    public List<ReturnHistory> getReturnHistory(String fab, String keyword) {
+        log.info("Getting return history for fab: {}, keyword: {}", fab, keyword);
+        try {
+            List<ReturnHistory> results = new ArrayList<>();
+            
+            // 키워드 검색 로직 추가
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                // 팹이 지정된 경우 해당 팹에서만 검색
+                if (fab != null && !fab.isEmpty()) {
+                    results.addAll(searchReturnInFab(keyword, fab));
+                } else {
+                    // 팹 미지정 시 모든 팹에서 검색
+                    results.addAll(searchReturnInFab(keyword, "M14"));
+                    results.addAll(searchReturnInFab(keyword, "M15"));
+                    results.addAll(searchReturnInFab(keyword, "M16"));
+                }
+            } else {
+                // 키워드 없이 팹별 전체 조회
+                if (fab != null && !fab.isEmpty()) {
+                    results.addAll(fetchReturnByFab(fab));
+                } else {
+                    results.addAll(safeSelectAllReturns(m14ReturnHistoryMapper, "M14"));
+                    results.addAll(safeSelectAllReturns(m15ReturnHistoryMapper, "M15"));
+                    results.addAll(safeSelectAllReturns(m16ReturnHistoryMapper, "M16"));
+                }
+            }
+            
+            // 반송일 최신순 정렬
+            results.sort(Comparator.comparing(ReturnHistory::getReturnDate, 
+                Comparator.nullsLast(Comparator.naturalOrder())).reversed());
+            
+            log.debug("Return history fetched. Found {} returns", results.size());
+            return results;
+        } catch (Exception e) {
+            log.error("DB fetch failed, falling back to mock. reason={}", e.getMessage(), e);
+            return getMockReturnData();
         }
-        
-        return allReturns;
     }
 
     public ReturnHistory createReturn(ReturnHistory returnHistory) {
@@ -124,5 +156,68 @@ public class ReturnService {
                     return matches;
                 })
                 .collect(Collectors.toList());
+    }
+
+    private List<ReturnHistory> searchReturnInFab(String keyword, String fab) {
+        try {
+            List<ReturnHistory> results = new ArrayList<>();
+            
+            // 키워드가 있으면 반송ID나 LOT번호로 검색
+            if (keyword != null && !keyword.isEmpty()) {
+                switch (fab) {
+                    case "M14":
+                        // 반송ID로 검색
+                        List<ReturnHistory> returnsByReturnId = m14ReturnHistoryMapper.selectByReturnId(keyword);
+                        if (returnsByReturnId != null) results.addAll(returnsByReturnId);
+                        // LOT번호로도 검색
+                        results.addAll(m14ReturnHistoryMapper.selectByLotNumber(keyword));
+                        break;
+                    case "M15":
+                        returnsByReturnId = m15ReturnHistoryMapper.selectByReturnId(keyword);
+                        if (returnsByReturnId != null) results.addAll(returnsByReturnId);
+                        results.addAll(m15ReturnHistoryMapper.selectByLotNumber(keyword));
+                        break;
+                    case "M16":
+                        returnsByReturnId = m16ReturnHistoryMapper.selectByReturnId(keyword);
+                        if (returnsByReturnId != null) results.addAll(returnsByReturnId);
+                        results.addAll(m16ReturnHistoryMapper.selectByLotNumber(keyword));
+                        break;
+                }
+            }
+            
+            return results;
+        } catch (Exception e) {
+            log.warn("Return search failed for fab {} with keyword {}: {}", fab, keyword, e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    private List<ReturnHistory> fetchReturnByFab(String fab) {
+        switch (fab) {
+            case "M14":
+                return m14ReturnHistoryMapper.selectByFab("M14");
+            case "M15":
+                return m15ReturnHistoryMapper.selectByFab("M15");
+            case "M16":
+                return m16ReturnHistoryMapper.selectByFab("M16");
+            default:
+                log.warn("Unknown fab: {}. Returning empty list.", fab);
+                return new ArrayList<>();
+        }
+    }
+
+    private List<ReturnHistory> safeSelectAllReturns(Object mapper, String fabLabel) {
+        try {
+            if (mapper instanceof com.ai.mes.mapper.m14.ReturnHistoryMapper) {
+                return ((com.ai.mes.mapper.m14.ReturnHistoryMapper) mapper).selectAll();
+            } else if (mapper instanceof com.ai.mes.mapper.m15.ReturnHistoryMapper) {
+                return ((com.ai.mes.mapper.m15.ReturnHistoryMapper) mapper).selectAll();
+            } else if (mapper instanceof com.ai.mes.mapper.m16.ReturnHistoryMapper) {
+                return ((com.ai.mes.mapper.m16.ReturnHistoryMapper) mapper).selectAll();
+            }
+        } catch (Exception e) {
+            log.warn("selectAll failed for {} return datasource: {}", fabLabel, e.getMessage());
+        }
+        return new ArrayList<>();
     }
 }

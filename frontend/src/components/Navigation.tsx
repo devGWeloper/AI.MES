@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { 
   ChevronDown, 
   Home, 
@@ -10,7 +10,8 @@ import {
   Settings, 
   Truck,
   History,
-  Activity
+  Activity,
+  Accessibility
 } from 'lucide-react';
 
 interface MenuItem {
@@ -75,12 +76,11 @@ export default function Navigation() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isHovering, setIsHovering] = useState<string | null>(null);
   const pathname = usePathname();
+  const router = useRouter();
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  
 
-  // 랜딩페이지(/)에서는 네비게이션을 숨김
-  if (pathname === '/') {
-    return null;
-  }
+  // 랜딩페이지(/)에서는 네비게이션을 숨김 (모든 훅 선언 이후에 처리)
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -98,6 +98,13 @@ export default function Navigation() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [openDropdown]);
+
+  // (접근성 토글 제거)
+
+  // 모든 훅 호출 이후에 조건부 렌더링 수행 (Hook 순서 불변)
+  if (pathname === '/') {
+    return null;
+  }
 
   const handleMouseEnter = (itemTitle: string) => {
     setIsHovering(itemTitle);
@@ -128,7 +135,7 @@ export default function Navigation() {
     if (path) {
       setOpenDropdown(null);
       setIsHovering(null);
-      window.location.href = path;
+      router.push(path);
     }
   };
 
@@ -151,14 +158,28 @@ export default function Navigation() {
       >
         <div
           className={`
-            flex items-center space-x-2 px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200
-            ${isActive ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'}
+            flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200 focus-ring
+            ${isActive ? 'bg-blue-600 text-white' : 'text-slate-700 hover:bg-slate-100'}
           `}
           onClick={() => {
             if (hasChildren) {
               handleDropdownClick(item.title);
             } else {
               handleMenuItemClick(item.path);
+            }
+          }}
+          role="button"
+          aria-haspopup={hasChildren ? 'menu' : undefined}
+          aria-expanded={hasChildren ? isOpen : undefined}
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              if (hasChildren) {
+                handleDropdownClick(item.title);
+              } else {
+                handleMenuItemClick(item.path);
+              }
             }
           }}
         >
@@ -171,15 +192,23 @@ export default function Navigation() {
         
         {/* Dropdown Menu */}
         {hasChildren && isOpen && (
-          <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+          <div className="absolute top-full left-0 mt-1 w-52 bg-white rounded-lg shadow-lg border border-slate-200 z-50" role="menu">
             {item.children!.map(child => (
               <div
                 key={child.title}
                 className={`
-                  flex items-center space-x-3 px-4 py-3 cursor-pointer transition-colors duration-200
-                  ${child.path === pathname ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'}
+                  flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors duration-200 focus-ring
+                  ${child.path === pathname ? 'bg-blue-50 text-blue-600' : 'text-slate-700 hover:bg-slate-50'}
                 `}
                 onClick={() => handleMenuItemClick(child.path)}
+                role="menuitem"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleMenuItemClick(child.path);
+                  }
+                }}
               >
                 {child.icon}
                 <span className="font-medium">{child.title}</span>
@@ -192,24 +221,24 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="bg-white shadow-lg">
+    <nav className="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-white/70 bg-white/80 border-b border-slate-200/60">
       <div className="container mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <Link href="/dashboard" className="flex items-center space-x-3">
-            <div className="bg-blue-600 text-white p-2 rounded-lg">
+        <div className="flex items-center justify-between px-6 py-4">
+          <Link href="/dashboard" className="flex items-center gap-3 group">
+            <div className="bg-gradient-to-br from-blue-600 to-violet-600 text-white p-2 rounded-xl shadow-sm">
               <Settings className="w-6 h-6" />
             </div>
-            <span className="text-xl font-bold text-gray-900">AI MES</span>
+            <div>
+              <span className="text-xl font-bold text-slate-900 leading-none block">AI MES</span>
+              <span className="text-xs text-slate-500 group-hover:text-slate-600 transition-colors">Manufacturing Execution System</span>
+            </div>
           </Link>
-          
-          <div className="text-sm text-gray-500">
-            Manufacturing Execution System
-          </div>
+          <div className="flex items-center gap-2" />
         </div>
-        
+
         {/* Horizontal Menu */}
-        <div className="flex items-center space-x-2 px-6 py-3">
+        <div className="flex items-center gap-2 px-6 pb-3" role="navigation" aria-label="주요 메뉴">
           {menuItems.map(item => renderMenuItem(item))}
         </div>
       </div>

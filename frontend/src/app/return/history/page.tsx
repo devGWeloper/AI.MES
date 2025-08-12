@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Search, Filter, Download, Bot, ArrowLeft, AlertTriangle, MessageCircle } from 'lucide-react';
 import AIChatPanel from '@/components/AIChatPanel';
+import type { ApiResponse, ReturnHistory as ReturnHistoryType } from '@/types';
 
 interface ReturnHistory {
   id: string;
@@ -29,83 +31,69 @@ export default function ReturnHistoryPage() {
   const [selectedSeverity, setSelectedSeverity] = useState('all');
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
-  // Mock data
-  useEffect(() => {
-    const mockData: ReturnHistory[] = [
-      {
-        id: '1',
-        returnId: 'RET-001',
-        lotNumber: 'LOT001',
-        product: 'Product A',
-        fab: 'M14',
-        returnReason: '품질 불량',
-        returnStep: 'Lithography',
-        returnDate: '2024-08-01 14:30:00',
-        returnBy: '김품질',
-        targetStep: 'Clean',
-        status: '해결완료',
-        severity: 'High',
-        resolvedDate: '2024-08-01 16:45:00',
-        comments: 'PR 두께 재조정 후 재처리 완료'
-      },
-      {
-        id: '2',
-        returnId: 'RET-002',
-        lotNumber: 'LOT002',
-        product: 'Product B',
-        fab: 'M15',
-        returnReason: '설비 오염',
-        returnStep: 'Etching',
-        returnDate: '2024-08-01 11:15:00',
-        returnBy: '이공정',
-        targetStep: 'Pre-Clean',
-        status: '처리중',
-        severity: 'Medium',
-        comments: '챔버 클리닝 후 재진입 예정'
-      },
-      {
-        id: '3',
-        returnId: 'RET-003',
-        lotNumber: 'LOT003',
-        product: 'Product C',
-        fab: 'M16',
-        returnReason: '측정값 이상',
-        returnStep: 'Measurement',
-        returnDate: '2024-08-01 09:45:00',
-        returnBy: '박측정',
-        targetStep: 'CMP',
-        status: '분석중',
-        severity: 'Low',
-        comments: '재측정 결과 대기 중'
-      },
-      {
-        id: '4',
-        returnId: 'RET-004',
-        lotNumber: 'LOT004',
-        product: 'Product A',
-        fab: 'M14',
-        returnReason: '공정 파라미터 오류',
-        returnStep: 'Deposition',
-        returnDate: '2024-07-31 16:20:00',
-        returnBy: '최공정',
-        targetStep: 'Strip',
-        status: '해결완료',
-        severity: 'High',
-        resolvedDate: '2024-08-01 08:30:00',
-        comments: '레시피 수정 후 재처리 완료'
-      }
-    ];
-    setReturnData(mockData);
-  }, []);
+  // 데이터 조회 (백엔드 API) - 반송ID/LOT번호 기반 검색
+  const fetchReturnHistory = async () => {
+    if (!searchTerm.trim()) {
+      alert('반송 ID 또는 LOT 번호를 입력해주세요.');
+      return;
+    }
 
-  const filteredData = returnData.filter(ret => {
-    const matchesSearch = ret.returnId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ret.lotNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ret.returnReason.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFab = selectedFab === 'all' || ret.fab === selectedFab;
-    const matchesSeverity = selectedSeverity === 'all' || ret.severity === selectedSeverity;
-    return matchesSearch && matchesFab && matchesSeverity;
-  });
+    setLoading(true);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      
+      // 반송 이력 조회 엔드포인트 호출 (기존 history 엔드포인트에 검색 파라미터 추가)
+      const params = new URLSearchParams();
+      if (selectedFab !== 'all') params.append('fab', selectedFab);
+      if (searchTerm.trim()) params.append('keyword', searchTerm.trim());
+      
+      const res = await axios.get<ApiResponse<any[]>>(
+        `/api/backend/returns/history${params.toString() ? '?' + params.toString() : ''}`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        }
+      );
+      
+      const raw = (res.data?.data ?? []) as any[];
+      const normalizeReturn = (item: any): ReturnHistory => ({
+        id: item.id,
+        returnId: item.returnId ?? item.return_id,
+        lotNumber: item.lotNumber ?? item.lot_number,
+        product: item.product,
+        fab: item.fab,
+        returnReason: item.returnReason ?? item.return_reason,
+        returnStep: item.returnStep ?? item.return_step,
+        returnDate: item.returnDate ?? item.return_date,
+        returnBy: item.returnBy ?? item.return_by,
+        targetStep: item.targetStep ?? item.target_step,
+        status: item.status,
+        severity: item.severity,
+        resolvedDate: item.resolvedDate ?? item.resolved_date,
+        comments: item.comments,
+      });
+      
+      // 추가 클라이언트 필터링 (심각도)
+      let results = raw.map(normalizeReturn);
+      if (selectedSeverity !== 'all') {
+        results = results.filter(ret => ret.severity === selectedSeverity);
+      }
+      
+      setReturnData(results);
+      
+      if (results.length === 0) {
+        alert('검색 결과가 없습니다.');
+      }
+    } catch (error) {
+      console.error('반송 이력 조회 실패', error);
+      setReturnData([]);
+      alert('조회 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 이제 서버에서 필터링된 결과를 받으므로 클라이언트 필터링 불필요
+  const filteredData = returnData;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -197,13 +185,13 @@ export default function ReturnHistoryPage() {
           <div className="grid md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                검색
+                반송ID/LOT번호 입력 <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
-                  placeholder="반송ID, LOT번호, 반송사유 검색"
+                  placeholder="반송ID 또는 LOT번호를 입력하세요"
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -243,7 +231,17 @@ export default function ReturnHistoryPage() {
               </select>
             </div>
             
-            <div className="flex items-end">
+            <div className="flex items-end justify-end gap-2">
+              <button
+                onClick={fetchReturnHistory}
+                disabled={loading}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors text-white ${
+                  loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+                aria-label="조회"
+              >
+                <span>{loading ? '조회중...' : '조회'}</span>
+              </button>
               <button className="flex items-center space-x-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors">
                 <Download className="w-5 h-5" />
                 <span>Export</span>
@@ -259,6 +257,14 @@ export default function ReturnHistoryPage() {
               반송 이력 목록 ({filteredData.length}건)
             </h3>
           </div>
+          {loading && (
+            <div className="p-6 text-sm text-gray-500">조회 중...</div>
+          )}
+          {!loading && returnData.length === 0 && (
+            <div className="p-6 text-sm text-gray-500 text-center">
+              반송 ID 또는 LOT 번호를 입력하고 조회 버튼을 눌러주세요.
+            </div>
+          )}
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">

@@ -25,9 +25,10 @@ public class ReturnController {
     @GetMapping("/history")
     @Operation(summary = "반송 이력 조회", description = "팹별 반송 이력을 조회합니다.")
     public ResponseEntity<ApiResponse<List<ReturnHistory>>> getReturnHistory(
-            @Parameter(description = "팹 코드 (M14, M15, M16)") @RequestParam(required = false) String fab) {
+            @Parameter(description = "팹 코드 (M14, M15, M16)") @RequestParam(required = false) String fab,
+            @Parameter(description = "검색 키워드 (반송ID, LOT번호)") @RequestParam(required = false) String keyword) {
         try {
-            List<ReturnHistory> returnHistory = returnService.getReturnHistory(fab);
+            List<ReturnHistory> returnHistory = returnService.getReturnHistory(fab, keyword);
             return ResponseEntity.ok(ApiResponse.success(returnHistory, "반송 이력 조회 성공"));
         } catch (Exception e) {
             log.error("Error getting return history", e);

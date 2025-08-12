@@ -65,6 +65,7 @@ export default function AIChatPanel({ isOpen, onClose, agentType }: AIChatPanelP
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const config = agentConfigs[agentType];
 
@@ -84,6 +85,37 @@ export default function AIChatPanel({ isOpen, onClose, agentType }: AIChatPanelP
         inputRef.current?.focus();
       }, 100);
     }
+  }, [isOpen]);
+
+  // Focus trap within the panel when open
+  useEffect(() => {
+    if (!isOpen) return;
+    const root = panelRef.current;
+    if (!root) return;
+    const focusable = root.querySelectorAll<HTMLElement>(
+      'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])'
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      if (focusable.length === 0) return;
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    root.addEventListener('keydown', onKeyDown);
+    return () => root.removeEventListener('keydown', onKeyDown);
   }, [isOpen]);
 
   // AI 응답 시뮬레이션
@@ -173,24 +205,24 @@ export default function AIChatPanel({ isOpen, onClose, agentType }: AIChatPanelP
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-end">
-      <div className="w-full max-w-md h-full bg-white shadow-xl flex flex-col">
+    <div className="fixed inset-0 bg-slate-900/40 z-50 flex justify-end backdrop-blur-sm">
+      <div ref={panelRef} className="w-full max-w-md h-full bg-white/95 backdrop-blur shadow-2xl flex flex-col border-l border-slate-200" role="dialog" aria-modal="true" aria-label="AI 대화 패널">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200/70">
           <div className="flex items-center space-x-3">
-            <div className="bg-blue-600 p-2 rounded-lg">
+            <div className="bg-gradient-to-br from-blue-600 to-violet-600 p-2 rounded-lg shadow-sm">
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">{config.title}</h3>
-              <p className="text-sm text-gray-500">{config.description}</p>
+              <h3 className="font-semibold text-slate-900">{config.title}</h3>
+              <p className="text-sm text-slate-500">{config.description}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-slate-500" />
           </button>
         </div>
 
@@ -198,14 +230,14 @@ export default function AIChatPanel({ isOpen, onClose, agentType }: AIChatPanelP
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 && (
             <div className="text-center py-8">
-              <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 mb-4">AI와 대화를 시작해보세요</p>
+              <MessageCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-500 mb-4">AI와 대화를 시작해보세요</p>
               <div className="space-y-2">
                 {config.suggestions.map((suggestion, index) => (
                   <button
                     key={index}
                     onClick={() => handleSuggestionClick(suggestion)}
-                    className="block w-full text-left p-3 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                    className="block w-full text-left p-3 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-lg transition-colors"
                   >
                     {suggestion}
                   </button>
@@ -220,15 +252,15 @@ export default function AIChatPanel({ isOpen, onClose, agentType }: AIChatPanelP
               className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-xl ${
                   message.type === 'user'
                     ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-900'
+                    : 'bg-slate-100 text-slate-900'
                 }`}
               >
                 <div className="whitespace-pre-wrap text-sm">{message.content}</div>
                 <div className={`text-xs mt-1 ${
-                  message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
+                  message.type === 'user' ? 'text-blue-100' : 'text-slate-500'
                 }`}>
                   {message.timestamp.toLocaleTimeString('ko-KR', {
                     hour: '2-digit',
@@ -241,7 +273,7 @@ export default function AIChatPanel({ isOpen, onClose, agentType }: AIChatPanelP
           
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg">
+              <div className="bg-slate-100 text-slate-900 px-4 py-2 rounded-xl">
                 <div className="flex items-center space-x-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span className="text-sm">AI가 분석 중입니다...</span>
@@ -254,8 +286,8 @@ export default function AIChatPanel({ isOpen, onClose, agentType }: AIChatPanelP
         </div>
 
         {/* Input */}
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex space-x-2">
+        <div className="p-4 border-t border-slate-200/70">
+          <div className="flex gap-2">
             <input
               ref={inputRef}
               type="text"
@@ -263,13 +295,13 @@ export default function AIChatPanel({ isOpen, onClose, agentType }: AIChatPanelP
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder={config.placeholder}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-slate-900"
               disabled={isLoading}
             />
             <button
               onClick={handleSendMessage}
               disabled={!inputValue.trim() || isLoading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors focus-ring"
             >
               <Send className="w-4 h-4" />
             </button>

@@ -1,23 +1,18 @@
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-white py-4">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h3 className="text-lg font-semibold">AI MES System</h3>
-            <span className="text-gray-400 text-sm">|</span>
-            <span className="text-gray-400 text-sm">AI-powered Manufacturing Execution System</span>
+    <footer className="border-t border-slate-200/60 bg-white/80 backdrop-blur" role="contentinfo">
+      <div className="container mx-auto px-6 py-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-slate-900 font-semibold">AI MES System</h3>
+            <p className="text-sm text-slate-500">AI-powered Manufacturing Execution System</p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-400">
-              © 2025 SK AX. All rights reserved.
-            </p>
-            <p className="text-xs text-gray-500">
-              Developed by Manufacturing Service 1 Team
-            </p>
+            <p className="text-sm text-slate-500">© 2025 SK AX. All rights reserved.</p>
+            <p className="text-xs text-slate-400">Developed by Manufacturing Service 1 Team</p>
           </div>
         </div>
       </div>
     </footer>
   );
-} 
+}

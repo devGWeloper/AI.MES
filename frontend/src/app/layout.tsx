@@ -17,9 +17,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ko">
-      <body className={inter.className}>
-        <div className="min-h-screen bg-gray-50 flex flex-col">
+    <html lang="ko" suppressHydrationWarning>
+      <body className={`${inter.className} relative`}> 
+        {/* decorative blurred gradients */}
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
+          <div className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl" />
+        </div>
+        <div className="min-h-screen flex flex-col">
           <Navigation />
           <main className="flex-1">
             {children}

@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Search, Filter, Download, Bot, Settings, MessageCircle } from 'lucide-react';
 import AIChatPanel from '@/components/AIChatPanel';
+import type { ApiResponse, EquipmentData as EquipmentDataType } from '@/types';
 
 interface EquipmentHistory {
   id: string;
@@ -26,71 +28,55 @@ export default function EquipmentHistoryPage() {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
-  // Mock data
-  useEffect(() => {
-    const mockData: EquipmentHistory[] = [
-      {
-        id: '1',
-        equipmentId: 'LITHO-001',
-        equipmentName: 'Lithography Scanner A',
-        fab: 'M14',
-        operation: 'Exposure',
-        startTime: '2024-08-01 09:00:00',
-        endTime: '2024-08-01 11:30:00',
-        duration: '2시간 30분',
-        status: '완료',
-        lotNumber: 'LOT001',
-        result: '정상'
-      },
-      {
-        id: '2',
-        equipmentId: 'ETCH-002',
-        equipmentName: 'Etching System B',
-        fab: 'M15',
-        operation: 'Dry Etch',
-        startTime: '2024-08-01 10:15:00',
-        endTime: '2024-08-01 14:45:00',
-        duration: '4시간 30분',
-        status: '완료',
-        lotNumber: 'LOT002',
-        result: '지연'
-      },
-      {
-        id: '3',
-        equipmentId: 'DEP-003',
-        equipmentName: 'Deposition Chamber C',
-        fab: 'M16',
-        operation: 'CVD',
-        startTime: '2024-08-01 11:00:00',
-        duration: '진행중',
-        status: '진행중',
-        lotNumber: 'LOT003',
-        result: '오류'
-      },
-      {
-        id: '4',
-        equipmentId: 'CMP-001',
-        equipmentName: 'CMP Polisher A',
-        fab: 'M14',
-        operation: 'Chemical Polishing',
-        startTime: '2024-08-01 08:00:00',
-        endTime: '2024-08-01 09:00:00',
-        duration: '1시간',
-        status: '완료',
-        lotNumber: 'LOT004',
-        result: '정상'
-      }
-    ];
-    setEquipmentData(mockData);
-  }, []);
+  // 데이터 조회 (백엔드 API) - 설비 ID 기반 검색
+  const fetchEquipmentHistory = async () => {
+    if (!searchTerm.trim()) {
+      alert('설비 ID 또는 설비명을 입력해주세요.');
+      return;
+    }
 
-  const filteredData = equipmentData.filter(equipment => {
-    const matchesSearch = equipment.equipmentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         equipment.equipmentName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFab = selectedFab === 'all' || equipment.fab === selectedFab;
-    const matchesStatus = selectedStatus === 'all' || equipment.status === selectedStatus;
-    return matchesSearch && matchesFab && matchesStatus;
-  });
+    setLoading(true);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      
+      // 설비로 검색하는 엔드포인트 호출
+      const res = await axios.get<ApiResponse<any[]>>(
+        `/api/backend/equipment/search?keyword=${encodeURIComponent(searchTerm.trim())}&fab=${selectedFab !== 'all' ? selectedFab : ''}`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        }
+      );
+      
+      const raw = (res.data?.data ?? []) as any[];
+      const normalizeEquipment = (item: any): EquipmentHistory => ({
+        id: item.id,
+        equipmentId: item.equipmentId ?? item.equipment_id,
+        equipmentName: item.equipmentName ?? item.equipment_name,
+        fab: item.fab,
+        operation: item.operation ?? item.current_operation ?? 'N/A',
+        startTime: item.startTime ?? item.start_time ?? '',
+        endTime: item.endTime ?? item.end_time,
+        duration: item.duration ?? 'N/A',
+        status: item.status,
+        lotNumber: item.lotNumber ?? item.lot_number ?? item.current_lot,
+        result: item.result ?? 'N/A',
+      });
+      setEquipmentData(raw.map(normalizeEquipment));
+      
+      if (raw.length === 0) {
+        alert('검색 결과가 없습니다.');
+      }
+    } catch (error) {
+      console.error('설비 이력 조회 실패', error);
+      setEquipmentData([]);
+      alert('조회 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 이제 서버에서 필터링된 결과를 받으므로 클라이언트 필터링 불필요
+  const filteredData = equipmentData;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -133,13 +119,13 @@ export default function EquipmentHistoryPage() {
           <div className="grid md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                설비 검색
+                설비 ID/명 입력 <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
-                  placeholder="설비 ID 또는 이름 검색"
+                  placeholder="설비 ID 또는 설비명을 입력하세요"
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -179,7 +165,17 @@ export default function EquipmentHistoryPage() {
               </select>
             </div>
             
-            <div className="flex items-end">
+            <div className="flex items-end justify-end gap-2">
+              <button
+                onClick={fetchEquipmentHistory}
+                disabled={loading}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors text-white ${
+                  loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+                aria-label="조회"
+              >
+                <span>{loading ? '조회중...' : '조회'}</span>
+              </button>
               <button className="flex items-center space-x-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors">
                 <Download className="w-5 h-5" />
                 <span>Export</span>
@@ -195,6 +191,14 @@ export default function EquipmentHistoryPage() {
               설비 이력 ({filteredData.length}건)
             </h3>
           </div>
+          {loading && (
+            <div className="p-6 text-sm text-gray-500">조회 중...</div>
+          )}
+          {!loading && equipmentData.length === 0 && (
+            <div className="p-6 text-sm text-gray-500 text-center">
+              설비 ID 또는 설비명을 입력하고 조회 버튼을 눌러주세요.
+            </div>
+          )}
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">

@@ -2,32 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Modern base tokens */
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --mes-bg: 248 250 252; /* slate-50 */
+  --mes-fg: 15 23 42;    /* slate-900 */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+html, body {
+  height: 100%;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  color: rgb(var(--mes-fg));
+  background-color: rgb(var(--mes-bg));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Subtle grid + radial spotlight background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(600px 300px at 20% -20%, rgba(59, 130, 246, 0.10), transparent 60%),
+    radial-gradient(800px 400px at 120% 20%, rgba(139, 92, 246, 0.10), transparent 60%),
+    radial-gradient(700px 350px at 50% 120%, rgba(14, 165, 233, 0.10), transparent 60%);
+  z-index: 0;
+}
+
+/* Reduced motion: honor system preference and optional manual toggle */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.reduced-motion *, .reduced-motion *::before, .reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Card helpers */
+@layer components {
+  .card {
+    @apply bg-white/80 backdrop-blur rounded-2xl border border-slate-200/70 shadow-sm;
+  }
+  .card-hover {
+    @apply transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 text-white px-4 py-2 font-medium shadow-sm hover:bg-primary-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white;
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white;
   }
 }

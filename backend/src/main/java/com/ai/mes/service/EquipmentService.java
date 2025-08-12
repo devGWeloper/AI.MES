@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,6 +15,11 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class EquipmentService {
+
+    // 각 팹 별 MyBatis Mapper 주입
+    private final com.ai.mes.mapper.m14.EquipmentDataMapper m14EquipmentDataMapper;
+    private final com.ai.mes.mapper.m15.EquipmentDataMapper m15EquipmentDataMapper;
+    private final com.ai.mes.mapper.m16.EquipmentDataMapper m16EquipmentDataMapper;
 
     // Mock data for development - replace with actual database calls
     private List<EquipmentData> getMockEquipmentData() {
@@ -82,28 +88,79 @@ public class EquipmentService {
 
     public List<EquipmentData> searchEquipment(String keyword, String fab, String status) {
         log.info("Searching equipment with keyword: {}, fab: {}, status: {}", keyword, fab, status);
-        List<EquipmentData> allEquipment = getMockEquipmentData();
-        
-        return allEquipment.stream()
-                .filter(equipment -> {
-                    boolean matches = true;
-                    
-                    if (keyword != null && !keyword.isEmpty()) {
-                        matches = equipment.getEquipmentId().toLowerCase().contains(keyword.toLowerCase()) ||
-                                 equipment.getEquipmentName().toLowerCase().contains(keyword.toLowerCase());
-                    }
-                    
-                    if (fab != null && !fab.isEmpty()) {
-                        matches = matches && fab.equals(equipment.getFab());
-                    }
-                    
-                    if (status != null && !status.isEmpty()) {
-                        matches = matches && status.equals(equipment.getStatus());
-                    }
-                    
-                    return matches;
-                })
-                .collect(Collectors.toList());
+        try {
+            List<EquipmentData> results = new ArrayList<>();
+            
+            // 팹이 지정된 경우 해당 팹에서만 검색
+            if (fab != null && !fab.isEmpty()) {
+                results.addAll(searchEquipmentInFab(keyword, fab, status));
+            } else {
+                // 팹 미지정 시 모든 팹에서 검색
+                results.addAll(searchEquipmentInFab(keyword, "M14", status));
+                results.addAll(searchEquipmentInFab(keyword, "M15", status));
+                results.addAll(searchEquipmentInFab(keyword, "M16", status));
+            }
+            
+            // 생성일 최신순 정렬
+            results.sort(Comparator.comparing(EquipmentData::getCreatedAt, 
+                Comparator.nullsLast(Comparator.naturalOrder())).reversed());
+            
+            log.debug("Equipment search completed. Found {} equipments", results.size());
+            return results;
+        } catch (Exception e) {
+            log.error("DB search failed, falling back to mock. reason={}", e.getMessage(), e);
+            // 폴백: 목 데이터에서 검색
+            return getMockEquipmentData().stream()
+                    .filter(equipment -> {
+                        boolean matches = true;
+                        if (keyword != null && !keyword.isEmpty()) {
+                            matches = equipment.getEquipmentId().toLowerCase().contains(keyword.toLowerCase()) ||
+                                     equipment.getEquipmentName().toLowerCase().contains(keyword.toLowerCase());
+                        }
+                        if (fab != null && !fab.isEmpty()) {
+                            matches = matches && fab.equals(equipment.getFab());
+                        }
+                        if (status != null && !status.isEmpty()) {
+                            matches = matches && status.equals(equipment.getStatus());
+                        }
+                        return matches;
+                    })
+                    .collect(Collectors.toList());
+        }
+    }
+
+    private List<EquipmentData> searchEquipmentInFab(String keyword, String fab, String status) {
+        try {
+            List<EquipmentData> results = new ArrayList<>();
+            
+            // 키워드가 있으면 설비 ID로 검색
+            if (keyword != null && !keyword.isEmpty()) {
+                switch (fab) {
+                    case "M14":
+                        // 설비 ID로 검색하는 매퍼 메서드 호출
+                        results.addAll(m14EquipmentDataMapper.selectByEquipmentId(keyword));
+                        break;
+                    case "M15":
+                        results.addAll(m15EquipmentDataMapper.selectByEquipmentId(keyword));
+                        break;
+                    case "M16":
+                        results.addAll(m16EquipmentDataMapper.selectByEquipmentId(keyword));
+                        break;
+                }
+            }
+            
+            // 상태 필터 적용
+            if (status != null && !status.isEmpty()) {
+                results = results.stream()
+                        .filter(equipment -> status.equals(equipment.getStatus()))
+                        .collect(Collectors.toList());
+            }
+            
+            return results;
+        } catch (Exception e) {
+            log.warn("Equipment search failed for fab {} with keyword {}: {}", fab, keyword, e.getMessage());
+            return new ArrayList<>();
+        }
     }
 
     public EquipmentData updateEquipmentStatus(String equipmentId, String status) {

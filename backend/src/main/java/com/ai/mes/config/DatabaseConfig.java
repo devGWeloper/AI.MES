@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import com.ai.mes.config.mybatis.MyBatisQueryLoggingInterceptor;
+import org.apache.ibatis.plugin.Interceptor;
 
 import javax.sql.DataSource;
 
@@ -54,6 +56,7 @@ public class DatabaseConfig {
             sessionFactory.setMapperLocations(
                 new PathMatchingResourcePatternResolver().getResources("classpath:mapper/m14/**/*.xml")
             );
+            sessionFactory.setPlugins(new Interceptor[]{ new MyBatisQueryLoggingInterceptor() });
             return sessionFactory.getObject();
         }
 
@@ -103,6 +106,7 @@ public class DatabaseConfig {
             sessionFactory.setMapperLocations(
                 new PathMatchingResourcePatternResolver().getResources("classpath:mapper/m15/**/*.xml")
             );
+            sessionFactory.setPlugins(new Interceptor[]{ new MyBatisQueryLoggingInterceptor() });
             return sessionFactory.getObject();
         }
 
@@ -154,6 +158,7 @@ public class DatabaseConfig {
             sessionFactory.setMapperLocations(
                 new PathMatchingResourcePatternResolver().getResources("classpath:mapper/m16/**/*.xml")
             );
+            sessionFactory.setPlugins(new Interceptor[]{ new MyBatisQueryLoggingInterceptor() });
             return sessionFactory.getObject();
         }
 

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,6 +15,11 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class LotService {
+
+    // 각 팹 별 MyBatis Mapper 주입 (패키지 경로를 타입으로 사용)
+    private final com.ai.mes.mapper.m14.LotDataMapper m14LotDataMapper;
+    private final com.ai.mes.mapper.m15.LotDataMapper m15LotDataMapper;
+    private final com.ai.mes.mapper.m16.LotDataMapper m16LotDataMapper;
 
     // Mock data for development - replace with actual database calls
     private List<LotData> getMockLotData() {
@@ -39,15 +45,25 @@ public class LotService {
 
     public List<LotData> getLotHistory(String fab) {
         log.info("Getting lot history for fab: {}", fab);
-        List<LotData> allLots = getMockLotData();
-        
-        if (fab != null && !fab.isEmpty()) {
-            return allLots.stream()
-                    .filter(lot -> fab.equals(lot.getFab()))
-                    .collect(Collectors.toList());
+        try {
+            if (fab != null && !fab.isEmpty()) {
+                List<LotData> result = fetchByFab(fab);
+                log.debug("Fetched {} rows from {} datasource", result.size(), fab);
+                return result;
+            }
+            // fab 미지정 시 전체 팹에서 취합
+            List<LotData> merged = new ArrayList<>();
+            merged.addAll(safeSelectAll(m14LotDataMapper, "M14"));
+            merged.addAll(safeSelectAll(m15LotDataMapper, "M15"));
+            merged.addAll(safeSelectAll(m16LotDataMapper, "M16"));
+            // 생성일 최신순 정렬 (null 안전)
+            merged.sort(Comparator.comparing(LotData::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed());
+            log.debug("Merged rows across fabs: {}", merged.size());
+            return merged;
+        } catch (Exception e) {
+            log.error("DB fetch failed, falling back to mock. reason={}", e.getMessage(), e);
+            return getMockLotData();
         }
-        
-        return allLots;
     }
 
     public List<LotData> getLotStatus(String fab) {
@@ -78,27 +94,106 @@ public class LotService {
 
     public List<LotData> searchLots(String keyword, String fab, String status) {
         log.info("Searching lots with keyword: {}, fab: {}, status: {}", keyword, fab, status);
-        List<LotData> allLots = getMockLotData();
-        
-        return allLots.stream()
-                .filter(lot -> {
-                    boolean matches = true;
-                    
-                    if (keyword != null && !keyword.isEmpty()) {
-                        matches = lot.getLotNumber().toLowerCase().contains(keyword.toLowerCase()) ||
-                                 lot.getProduct().toLowerCase().contains(keyword.toLowerCase());
-                    }
-                    
-                    if (fab != null && !fab.isEmpty()) {
-                        matches = matches && fab.equals(lot.getFab());
-                    }
-                    
-                    if (status != null && !status.isEmpty()) {
-                        matches = matches && status.equals(lot.getStatus());
-                    }
-                    
-                    return matches;
-                })
-                .collect(Collectors.toList());
+        try {
+            List<LotData> results = new ArrayList<>();
+            
+            // 팹이 지정된 경우 해당 팹에서만 검색
+            if (fab != null && !fab.isEmpty()) {
+                results.addAll(searchInFab(keyword, fab, status));
+            } else {
+                // 팹 미지정 시 모든 팹에서 검색
+                results.addAll(searchInFab(keyword, "M14", status));
+                results.addAll(searchInFab(keyword, "M15", status));
+                results.addAll(searchInFab(keyword, "M16", status));
+            }
+            
+            // 생성일 최신순 정렬
+            results.sort(Comparator.comparing(LotData::getCreatedAt, 
+                Comparator.nullsLast(Comparator.naturalOrder())).reversed());
+            
+            log.debug("Search completed. Found {} lots", results.size());
+            return results;
+        } catch (Exception e) {
+            log.error("DB search failed, falling back to mock. reason={}", e.getMessage(), e);
+            // 폴백: 목 데이터에서 검색
+            return getMockLotData().stream()
+                    .filter(lot -> {
+                        boolean matches = true;
+                        if (keyword != null && !keyword.isEmpty()) {
+                            matches = lot.getLotNumber().toLowerCase().contains(keyword.toLowerCase()) ||
+                                     lot.getProduct().toLowerCase().contains(keyword.toLowerCase());
+                        }
+                        if (fab != null && !fab.isEmpty()) {
+                            matches = matches && fab.equals(lot.getFab());
+                        }
+                        if (status != null && !status.isEmpty()) {
+                            matches = matches && status.equals(lot.getStatus());
+                        }
+                        return matches;
+                    })
+                    .collect(Collectors.toList());
+        }
+    }
+
+    private List<LotData> searchInFab(String keyword, String fab, String status) {
+        try {
+            List<LotData> results = new ArrayList<>();
+            
+            // 키워드가 있으면 LOT 번호로 검색
+            if (keyword != null && !keyword.isEmpty()) {
+                switch (fab) {
+                    case "M14":
+                        results.addAll(m14LotDataMapper.selectByLotNumber(keyword));
+                        break;
+                    case "M15":
+                        results.addAll(m15LotDataMapper.selectByLotNumber(keyword));
+                        break;
+                    case "M16":
+                        results.addAll(m16LotDataMapper.selectByLotNumber(keyword));
+                        break;
+                }
+            }
+            
+            // 상태 필터 적용 (클라이언트에서 추가 필터링)
+            if (status != null && !status.isEmpty()) {
+                results = results.stream()
+                        .filter(lot -> status.equals(lot.getStatus()))
+                        .collect(Collectors.toList());
+            }
+            
+            return results;
+        } catch (Exception e) {
+            log.warn("Search failed for fab {} with keyword {}: {}", fab, keyword, e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    private List<LotData> fetchByFab(String fab) {
+        switch (fab) {
+            case "M14":
+                return m14LotDataMapper.selectByFab("M14");
+            case "M15":
+                return m15LotDataMapper.selectByFab("M15");
+            case "M16":
+                return m16LotDataMapper.selectByFab("M16");
+            default:
+                log.warn("Unknown fab: {}. Returning empty list.", fab);
+                return new ArrayList<>();
+        }
+    }
+
+    private List<LotData> safeSelectAll(Object mapper, String fabLabel) {
+        try {
+            if (mapper instanceof com.ai.mes.mapper.m14.LotDataMapper) {
+                return ((com.ai.mes.mapper.m14.LotDataMapper) mapper).selectAll();
+            } else if (mapper instanceof com.ai.mes.mapper.m15.LotDataMapper) {
+                return ((com.ai.mes.mapper.m15.LotDataMapper) mapper).selectAll();
+            } else if (mapper instanceof com.ai.mes.mapper.m16.LotDataMapper) {
+                return ((com.ai.mes.mapper.m16.LotDataMapper) mapper).selectAll();
+            }
+        } catch (Exception e) {
+            log.warn("selectAll failed for {} datasource: {}", fabLabel, e.getMessage());
+        }
+        return new ArrayList<>();
     }
 }
