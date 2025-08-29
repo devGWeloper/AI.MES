@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, Download, Bot, Settings, MessageCircle } from 'lucide-react';
 import AIChatPanel from '@/components/AIChatPanel';
-import { equipmentApi } from '@/lib/apiClient';
+import { equipmentApi } from '@/api';
 import type { ApiResponse, EquipmentData as EquipmentDataType } from '@/types';
 
 interface EquipmentHistory {

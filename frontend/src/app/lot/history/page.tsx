@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Download, MessageCircle } from 'lucide-react';
 import AIChatPanel from '@/components/AIChatPanel';
-import { lotApi } from '@/lib/apiClient';
+import { lotApi } from '@/api';
 import type { ApiResponse, LotData as LotDataType } from '@/types';
 
 export default function LotHistoryPage() {
