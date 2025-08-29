@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Search, Filter, Download, Bot, Settings, MessageCircle } from 'lucide-react';
 import AIChatPanel from '@/components/AIChatPanel';
 import { equipmentApi } from '@/api';
+import { getStatusColor, getResultColor } from '@/common';
 import type { ApiResponse, EquipmentData as EquipmentDataType } from '@/types';
 
 interface EquipmentHistory {
@@ -72,24 +73,6 @@ export default function EquipmentHistoryPage() {
 
   // 이제 서버에서 필터링된 결과를 받으므로 클라이언트 필터링 불필요
   const filteredData = equipmentData;
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case '완료': return 'bg-green-100 text-green-800';
-      case '진행중': return 'bg-blue-100 text-blue-800';
-      case '대기': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getResultColor = (result: string) => {
-    switch (result) {
-      case '정상': return 'bg-green-100 text-green-800';
-      case '지연': return 'bg-yellow-100 text-yellow-800';
-      case '오류': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   return (
     <div className="container mx-auto px-4 py-8">

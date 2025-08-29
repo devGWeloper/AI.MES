@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Search, Download, MessageCircle } from 'lucide-react';
 import AIChatPanel from '@/components/AIChatPanel';
 import { lotApi } from '@/api';
+import { getStatusColor } from '@/common';
 import type { ApiResponse, LotData as LotDataType } from '@/types';
 
 export default function LotHistoryPage() {
@@ -70,21 +71,6 @@ export default function LotHistoryPage() {
         return '오류';
       default:
         return status;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'in_progress':
-        return 'bg-blue-100 text-blue-800';
-      case 'waiting':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'error':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
     }
   };
 

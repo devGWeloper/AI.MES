@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { RefreshCw, Activity, Bot, AlertTriangle, MessageCircle } from 'lucide-react';
 import AIChatPanel from '@/components/AIChatPanel';
+import { getStatusColor } from '@/common';
 
 interface LotStatus {
   id: string;

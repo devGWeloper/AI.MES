@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Search, Filter, Download, Bot, ArrowLeft, AlertTriangle, MessageCircle } from 'lucide-react';
 import AIChatPanel from '@/components/AIChatPanel';
 import { returnApi } from '@/api';
+import { getStatusColor, getSeverityColor } from '@/common';
 import type { ApiResponse, ReturnHistory as ReturnHistoryType } from '@/types';
 
 interface ReturnHistory {
@@ -85,24 +86,6 @@ export default function ReturnHistoryPage() {
 
   // 이제 서버에서 필터링된 결과를 받으므로 클라이언트 필터링 불필요
   const filteredData = returnData;
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case '해결완료': return 'bg-green-100 text-green-800';
-      case '처리중': return 'bg-blue-100 text-blue-800';
-      case '분석중': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'High': return 'bg-red-100 text-red-800';
-      case 'Medium': return 'bg-yellow-100 text-yellow-800';
-      case 'Low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   return (
     <div className="container mx-auto px-4 py-8">
