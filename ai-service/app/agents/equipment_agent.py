@@ -134,3 +134,51 @@ class EquipmentAgent(BaseAgent):
         """
         
         return await self.analyze(context, {"equipment_id": equipment_id, "analysis_type": "prediction"})
+    
+    async def analyze_with_context(self, user_message: str, context_data: Optional[Dict[str, Any]] = None) -> str:
+        """컨텍스트 데이터를 활용한 사용자 질문 분석"""
+        context = f"사용자 질문: {user_message}"
+        
+        # 컨텍스트 데이터 분석 및 프롬프트에 포함
+        if context_data:
+            if context_data.get('pageType') == 'equipment_history':
+                context += f"\n\n현재 사용자는 Equipment History 화면에 있습니다."
+                
+            if context_data.get('equipmentData'):
+                equipment_list = context_data['equipmentData']
+                equipment_count = len(equipment_list)
+                context += f"\n화면에 표시된 설비 데이터: {equipment_count}개"
+                
+                # 설비 데이터 요약
+                if equipment_list:
+                    fabs = list(set(eq.get('fab', '') for eq in equipment_list))
+                    statuses = list(set(eq.get('status', '') for eq in equipment_list))
+                    results = list(set(eq.get('result', '') for eq in equipment_list))
+                    context += f"\n팹: {', '.join(fabs)}"
+                    context += f"\n상태: {', '.join(statuses)}"
+                    context += f"\n결과: {', '.join(results)}"
+                    
+                    # 처음 몇 개 설비 정보 포함
+                    context += f"\n\n주요 설비 정보:"
+                    for i, eq in enumerate(equipment_list[:5]):  # 처음 5개만
+                        context += f"\n{i+1}. 설비ID: {eq.get('equipmentId', 'N/A')}, 설비명: {eq.get('equipmentName', 'N/A')}, 상태: {eq.get('status', 'N/A')}, 팹: {eq.get('fab', 'N/A')}, 결과: {eq.get('result', 'N/A')}"
+                    
+                    if equipment_count > 5:
+                        context += f"\n... 외 {equipment_count - 5}개 추가"
+                        
+            if context_data.get('searchTerm'):
+                context += f"\n검색어: {context_data['searchTerm']}"
+                
+            if context_data.get('selectedFab') and context_data.get('selectedFab') != 'all':
+                context += f"\n선택된 팹: {context_data['selectedFab']}"
+                
+            if context_data.get('selectedStatus') and context_data.get('selectedStatus') != 'all':
+                context += f"\n선택된 상태: {context_data['selectedStatus']}"
+        
+        context += f"\n\n위 설비 컨텍스트 정보를 바탕으로 사용자의 질문에 대해 구체적이고 유용한 설비 분석을 제공해주세요."
+        
+        data = {"analysis_type": "context_chat"}
+        if context_data:
+            data.update(context_data)
+            
+        return await self.analyze(context, data)

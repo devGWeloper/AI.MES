@@ -254,6 +254,14 @@ export default function EquipmentHistoryPage() {
         isOpen={isAIChatOpen}
         onClose={() => setIsAIChatOpen(false)}
         agentType="equipment"
+        context={{
+          pageType: 'equipment_history',
+          equipmentData: filteredData,
+          searchTerm: searchTerm,
+          selectedFab: selectedFab,
+          selectedStatus: selectedStatus,
+          totalCount: filteredData.length
+        }}
       />
     </div>
   );

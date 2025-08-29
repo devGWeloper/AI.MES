@@ -14,6 +14,7 @@ interface AIChatPanelProps {
   isOpen: boolean;
   onClose: () => void;
   agentType: 'lot' | 'equipment' | 'return' | 'general';
+  context?: any; // 화면의 데이터를 컨텍스트로 전달
 }
 
 const agentConfigs = {
@@ -59,7 +60,7 @@ const agentConfigs = {
   }
 };
 
-export default function AIChatPanel({ isOpen, onClose, agentType }: AIChatPanelProps) {
+export default function AIChatPanel({ isOpen, onClose, agentType, context }: AIChatPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -118,52 +119,94 @@ export default function AIChatPanel({ isOpen, onClose, agentType }: AIChatPanelP
     return () => root.removeEventListener('keydown', onKeyDown);
   }, [isOpen]);
 
-  // AI 응답 시뮬레이션
-  const simulateAIResponse = async (userMessage: string) => {
-    setIsLoading(true);
-    
-    // 실제 API 호출을 시뮬레이션
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    let aiResponse = '';
-    
-    switch (agentType) {
-      case 'lot':
-        if (userMessage.includes('생산 이력')) {
-          aiResponse = 'Lot M14-2024-001의 생산 이력을 분석한 결과:\n\n• 생산 시작: 2024-01-15 09:00\n• 완료 시간: 2024-01-16 14:30\n• 총 생산 시간: 29.5시간\n• 생산량: 1,200개\n• 불량률: 0.8%\n• 반송 횟수: 2회\n\n전반적으로 양호한 생산성을 보이고 있으며, 불량률이 업계 평균(1.2%)보다 낮습니다.';
-        } else if (userMessage.includes('반송률')) {
-          aiResponse = '최근 반송률이 높은 Lot 분석:\n\n1. Lot M16-2024-005 (반송률: 15.2%)\n   - 원인: 설비 불량으로 인한 품질 이슈\n   - 조치: 설비 정비 완료\n\n2. Lot M15-2024-012 (반송률: 12.8%)\n   - 원인: 원자재 품질 문제\n   - 조치: 공급업체 교체 검토\n\n3. Lot M14-2024-008 (반송률: 8.5%)\n   - 원인: 작업자 실수\n   - 조치: 교육 강화';
-        } else {
-          aiResponse = 'Lot 데이터를 분석한 결과를 제공해드리겠습니다. 더 구체적인 질문을 해주시면 더 정확한 분석을 제공할 수 있습니다.';
-        }
-        break;
-        
-      case 'equipment':
-        if (userMessage.includes('가동률')) {
-          aiResponse = '설비 EQP-001 가동률 분석:\n\n• 현재 가동률: 94.2%\n• 목표 가동률: 95.0%\n• 월간 평균: 93.8%\n• 정비 시간: 2.5시간/일\n• 다운타임: 1.2시간/일\n\n개선 방안:\n1. 예방 정비 스케줄 최적화\n2. 정비 시간 단축을 위한 툴 개선\n3. 작업자 교육 강화';
-        } else if (userMessage.includes('정비')) {
-          aiResponse = '정비가 필요한 설비 목록:\n\n🔴 긴급 정비 필요:\n• EQP-003: 베어링 마모 (2일 내 정비 필요)\n• EQP-007: 모터 이상 소음 (즉시 정비 필요)\n\n🟡 예방 정비 권장:\n• EQP-001: 다음 주 정비 예정\n• EQP-005: 3일 후 정비 권장\n\n🟢 정상 상태:\n• EQP-002, EQP-004, EQP-006';
-        } else {
-          aiResponse = '설비 데이터를 분석한 결과를 제공해드리겠습니다. 특정 설비나 지표에 대해 더 자세히 알고 싶으시면 말씀해 주세요.';
-        }
-        break;
-        
-      case 'return':
-        if (userMessage.includes('반송률') && userMessage.includes('원인')) {
-          aiResponse = '반송률이 높은 주요 원인 분석:\n\n📊 반송률 현황: 2.3% (목표: 1.5% 이하)\n\n🔍 주요 원인:\n1. 설비 불량 (45%)\n   - 베어링 마모\n   - 정밀도 저하\n\n2. 원자재 품질 (30%)\n   - 공급업체 품질 불안정\n   - 검수 기준 강화 필요\n\n3. 작업자 실수 (15%)\n   - 교육 부족\n   - 표준 작업 절차 미준수\n\n4. 기타 (10%)\n   - 환경 요인\n   - 측정 오차\n\n💡 개선 방안:\n• 예방 정비 강화\n• 공급업체 품질 관리\n• 작업자 교육 프로그램 개선';
-        } else if (userMessage.includes('패턴')) {
-          aiResponse = '반송 패턴 분석 결과:\n\n📈 시간대별 패턴:\n• 오전 9-11시: 반송률 3.2% (피크)\n• 오후 2-4시: 반송률 1.8%\n• 야간: 반송률 1.5%\n\n📅 요일별 패턴:\n• 월요일: 반송률 2.8% (가장 높음)\n• 금요일: 반송률 1.9%\n• 주말: 반송률 1.2%\n\n🏭 설비별 패턴:\n• EQP-003: 반송률 4.1% (가장 높음)\n• EQP-001: 반송률 1.2% (가장 낮음)\n\n💡 인사이트:\n• 월요일 오전 정비 후 첫 생산에서 반송률 증가\n• EQP-003 정비 필요성 확인';
-        } else {
-          aiResponse = '반송 데이터를 분석한 결과를 제공해드리겠습니다. 반송률, 패턴, 원인 등에 대해 더 구체적으로 질문해 주시면 상세한 분석을 제공할 수 있습니다.';
-        }
-        break;
-        
-      default:
-        aiResponse = '전체 시스템을 분석한 결과를 제공해드리겠습니다. 특정 영역이나 지표에 대해 더 자세히 알고 싶으시면 말씀해 주세요.';
+  // 실제 AI API 호출 (임시로 시뮬레이션 포함)
+  const callAIAnalysis = async (userMessage: string) => {
+    try {
+      const { aiAnalysisApi } = await import('@/api');
+      const response = await aiAnalysisApi.chatAnalysis(userMessage, agentType, context);
+      
+      if (response.success && response.data) {
+        return response.data.analysis;
+      } else {
+        throw new Error(response.message || 'AI 분석 실패');
+      }
+    } catch (error: any) {
+      console.error('AI 분석 호출 실패:', error);
+      
+      // AI 서비스가 실행되지 않은 경우 컨텍스트 기반 시뮬레이션 응답
+      if (error.message.includes('서버에 연결할 수 없습니다') || error.message.includes('서버 오류가 발생했습니다')) {
+        return generateContextBasedResponse(userMessage);
+      }
+      
+      return `죄송합니다. AI 분석 중 오류가 발생했습니다: ${error.message}`;
+    }
+  };
+
+  // 컨텍스트 기반 시뮬레이션 응답 생성
+  const generateContextBasedResponse = (userMessage: string): string => {
+    if (!context) {
+      return `AI 서비스에 연결할 수 없어 임시 응답을 제공합니다.\n\n질문: "${userMessage}"\n\n현재 AI 서비스가 실행되지 않고 있습니다. 서비스를 시작한 후 다시 시도해주세요.`;
+    }
+
+    const { pageType, totalCount } = context;
+    let response = `AI 서비스에 연결할 수 없어 컨텍스트 기반 임시 응답을 제공합니다.\n\n질문: "${userMessage}"\n\n`;
+
+    if (pageType === 'lot_history' && context.lotData) {
+      const lotData = context.lotData;
+      const fabs = Array.from(new Set(lotData.map((lot: any) => lot.fab)));
+      const statuses = Array.from(new Set(lotData.map((lot: any) => lot.status)));
+      
+      response += `📊 현재 Lot History 화면 분석:\n`;
+      response += `- 총 Lot 수: ${totalCount}개\n`;
+      response += `- 팹: ${fabs.join(', ')}\n`;
+      response += `- 상태: ${statuses.join(', ')}\n`;
+      
+      if (context.searchTerm) {
+        response += `- 검색어: ${context.searchTerm}\n`;
+      }
+      
+      response += `\n💡 주요 인사이트:\n`;
+      response += `- 검색된 Lot들의 상태 분포를 확인하세요\n`;
+      response += `- 특정 팹에서 문제가 집중되는지 검토가 필요합니다\n`;
+      response += `- 완전한 분석을 위해 AI 서비스를 시작해주세요\n`;
+      
+    } else if (pageType === 'equipment_history' && context.equipmentData) {
+      const equipmentData = context.equipmentData;
+      const fabs = Array.from(new Set(equipmentData.map((eq: any) => eq.fab)));
+      const statuses = Array.from(new Set(equipmentData.map((eq: any) => eq.status)));
+      
+      response += `🔧 현재 Equipment History 화면 분석:\n`;
+      response += `- 총 설비 수: ${totalCount}개\n`;
+      response += `- 팹: ${fabs.join(', ')}\n`;
+      response += `- 상태: ${statuses.join(', ')}\n`;
+      
+      response += `\n💡 주요 인사이트:\n`;
+      response += `- 설비별 가동률과 성능을 점검하세요\n`;
+      response += `- 정비가 필요한 설비가 있는지 확인이 필요합니다\n`;
+      response += `- 상세한 분석을 위해 AI 서비스를 시작해주세요\n`;
+      
+    } else if (pageType === 'return_history' && context.returnData) {
+      const returnData = context.returnData;
+      const summaryStats = context.summaryStats;
+      
+      response += `🔄 현재 반송 이력 화면 분석:\n`;
+      response += `- 총 반송 건수: ${summaryStats?.totalReturns || totalCount}개\n`;
+      response += `- 해결완료: ${summaryStats?.resolvedCount || 0}개\n`;
+      response += `- 처리중: ${summaryStats?.inProgressCount || 0}개\n`;
+      response += `- High 심각도: ${summaryStats?.highSeverityCount || 0}개\n`;
+      
+      response += `\n💡 주요 인사이트:\n`;
+      response += `- 반송률 개선이 필요한 영역을 식별하세요\n`;
+      response += `- High 심각도 반송의 근본 원인 분석이 중요합니다\n`;
+      response += `- 완전한 패턴 분석을 위해 AI 서비스를 시작해주세요\n`;
     }
     
-    setIsLoading(false);
-    return aiResponse;
+    response += `\n⚠️ AI 서비스 시작 방법:\n`;
+    response += `1. 터미널에서 ai-service 폴더로 이동\n`;
+    response += `2. 'python -m uvicorn app.main:app --reload' 실행\n`;
+    response += `3. AI 서비스가 시작되면 더 정확한 분석을 받을 수 있습니다`;
+    
+    return response;
   };
 
   const handleSendMessage = async () => {
@@ -179,7 +222,7 @@ export default function AIChatPanel({ isOpen, onClose, agentType }: AIChatPanelP
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
 
-    const aiResponse = await simulateAIResponse(userMessage.content);
+    const aiResponse = await callAIAnalysis(userMessage.content);
     
     const aiMessage: Message = {
       id: (Date.now() + 1).toString(),

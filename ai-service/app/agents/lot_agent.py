@@ -61,15 +61,24 @@ class LotAgent(BaseAgent):
             MessagesPlaceholder(variable_name="agent_scratchpad")
         ])
     
-    async def analyze_lot_status(self, fab: Optional[str] = None) -> str:
+    async def analyze_lot_status(self, fab: Optional[str] = None, context_data: Optional[Dict[str, Any]] = None) -> str:
         """Analyze current lot status"""
         context = f"현재 Lot 상태를 분석해주세요"
         if fab:
             context += f" (팹: {fab})"
         
-        return await self.analyze(context, {"fab": fab, "analysis_type": "status"})
+        # 컨텍스트 데이터가 있으면 추가 정보 포함
+        if context_data and context_data.get('lotData'):
+            lot_count = len(context_data['lotData'])
+            context += f"\n\n현재 화면에 {lot_count}개의 Lot 데이터가 있습니다."
+            
+        data = {"fab": fab, "analysis_type": "status"}
+        if context_data:
+            data.update(context_data)
+            
+        return await self.analyze(context, data)
     
-    async def analyze_lot_history(self, fab: Optional[str] = None, lot_number: Optional[str] = None) -> str:
+    async def analyze_lot_history(self, fab: Optional[str] = None, lot_number: Optional[str] = None, context_data: Optional[Dict[str, Any]] = None) -> str:
         """Analyze lot processing history"""
         context = f"Lot 처리 이력을 분석해주세요"
         if fab:
@@ -77,17 +86,31 @@ class LotAgent(BaseAgent):
         if lot_number:
             context += f" (Lot 번호: {lot_number})"
         
-        return await self.analyze(context, {
+        # 컨텍스트 데이터가 있으면 추가 정보 포함
+        if context_data and context_data.get('lotData'):
+            lot_count = len(context_data['lotData'])
+            context += f"\n\n현재 화면에 {lot_count}개의 Lot 데이터가 있습니다."
+            
+        data = {
             "fab": fab, 
             "lot_number": lot_number, 
             "analysis_type": "history"
-        })
+        }
+        if context_data:
+            data.update(context_data)
+            
+        return await self.analyze(context, data)
     
-    async def analyze_lot_performance(self, fab: Optional[str] = None) -> str:
+    async def analyze_lot_performance(self, fab: Optional[str] = None, context_data: Optional[Dict[str, Any]] = None) -> str:
         """Analyze lot processing performance and efficiency"""
         context = f"Lot 처리 성능과 효율성을 분석해주세요"
         if fab:
             context += f" (팹: {fab})"
+        
+        # 컨텍스트 데이터가 있으면 추가 정보 포함
+        if context_data and context_data.get('lotData'):
+            lot_count = len(context_data['lotData'])
+            context += f"\n\n현재 화면에 {lot_count}개의 Lot 데이터가 있습니다."
         
         context += """
         
@@ -99,4 +122,51 @@ class LotAgent(BaseAgent):
 5. 개선 방안 및 최적화 제안
         """
         
-        return await self.analyze(context, {"fab": fab, "analysis_type": "performance"})
+        data = {"fab": fab, "analysis_type": "performance"}
+        if context_data:
+            data.update(context_data)
+            
+        return await self.analyze(context, data)
+    
+    async def analyze_with_context(self, user_message: str, context_data: Optional[Dict[str, Any]] = None) -> str:
+        """컨텍스트 데이터를 활용한 사용자 질문 분석"""
+        context = f"사용자 질문: {user_message}"
+        
+        # 컨텍스트 데이터 분석 및 프롬프트에 포함
+        if context_data:
+            if context_data.get('pageType') == 'lot_history':
+                context += f"\n\n현재 사용자는 Lot History 화면에 있습니다."
+                
+            if context_data.get('lotData'):
+                lots = context_data['lotData']
+                lot_count = len(lots)
+                context += f"\n화면에 표시된 Lot 데이터: {lot_count}개"
+                
+                # Lot 데이터 요약
+                if lots:
+                    fabs = list(set(lot.get('fab', '') for lot in lots))
+                    statuses = list(set(lot.get('status', '') for lot in lots))
+                    context += f"\n팹: {', '.join(fabs)}"
+                    context += f"\n상태: {', '.join(statuses)}"
+                    
+                    # 처음 몇 개 Lot 정보 포함
+                    context += f"\n\n주요 Lot 정보:"
+                    for i, lot in enumerate(lots[:5]):  # 처음 5개만
+                        context += f"\n{i+1}. LOT: {lot.get('lotNumber', 'N/A')}, 제품: {lot.get('product', 'N/A')}, 상태: {lot.get('status', 'N/A')}, 팹: {lot.get('fab', 'N/A')}"
+                    
+                    if lot_count > 5:
+                        context += f"\n... 외 {lot_count - 5}개 추가"
+                        
+            if context_data.get('searchTerm'):
+                context += f"\n검색어: {context_data['searchTerm']}"
+                
+            if context_data.get('selectedFab') and context_data.get('selectedFab') != 'all':
+                context += f"\n선택된 팹: {context_data['selectedFab']}"
+        
+        context += f"\n\n위 컨텍스트 정보를 바탕으로 사용자의 질문에 대해 구체적이고 유용한 분석을 제공해주세요."
+        
+        data = {"analysis_type": "context_chat"}
+        if context_data:
+            data.update(context_data)
+            
+        return await self.analyze(context, data)

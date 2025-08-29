@@ -221,6 +221,13 @@ export default function LotHistoryPage() {
         isOpen={isAIChatOpen}
         onClose={() => setIsAIChatOpen(false)}
         agentType="lot"
+        context={{
+          pageType: 'lot_history',
+          lotData: filteredData,
+          searchTerm: searchTerm,
+          selectedFab: selectedFab,
+          totalCount: filteredData.length
+        }}
       />
     </div>
   );

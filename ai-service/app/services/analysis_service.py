@@ -242,3 +242,36 @@ class AnalysisService:
         ])
         
         return all_recommendations[:10], all_alerts[:10]  # Limit to top 10 each
+    
+    async def analyze_chat_message(self, message: str, agent_type: str, context_data: Optional[Dict[str, Any]] = None) -> AnalysisResponse:
+        """Analyze chat message with context using appropriate agent"""
+        self._ensure_initialized()
+        
+        try:
+            logger.info("Starting chat message analysis", agent_type=agent_type, has_context=bool(context_data))
+            
+            analysis = ""
+            
+            if agent_type == "lot":
+                analysis = await self.lot_agent.analyze_with_context(message, context_data)
+            elif agent_type == "equipment":
+                analysis = await self.equipment_agent.analyze_with_context(message, context_data)
+            elif agent_type == "return":
+                analysis = await self.return_agent.analyze_with_context(message, context_data)
+            else:
+                # General analysis - 가장 적절한 agent 선택
+                analysis = await self.lot_agent.analyze_with_context(message, context_data)
+            
+            # Extract recommendations and alerts from analysis
+            recommendations, alerts = self._extract_insights(analysis)
+            
+            return AnalysisResponse(
+                analysis=analysis,
+                recommendations=recommendations,
+                alerts=alerts,
+                timestamp=datetime.now()
+            )
+            
+        except Exception as e:
+            logger.error("Error in chat message analysis", error=str(e), agent_type=agent_type)
+            raise

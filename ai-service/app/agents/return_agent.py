@@ -133,3 +133,63 @@ class ReturnAgent(BaseAgent):
         """
         
         return await self.analyze(context, {"severity": severity, "analysis_type": "impact"})
+    
+    async def analyze_with_context(self, user_message: str, context_data: Optional[Dict[str, Any]] = None) -> str:
+        """컨텍스트 데이터를 활용한 사용자 질문 분석"""
+        context = f"사용자 질문: {user_message}"
+        
+        # 컨텍스트 데이터 분석 및 프롬프트에 포함
+        if context_data:
+            if context_data.get('pageType') == 'return_history':
+                context += f"\n\n현재 사용자는 반송 이력 조회 화면에 있습니다."
+                
+            if context_data.get('returnData'):
+                return_list = context_data['returnData']
+                return_count = len(return_list)
+                context += f"\n화면에 표시된 반송 데이터: {return_count}개"
+                
+                # 반송 데이터 요약
+                if return_list:
+                    fabs = list(set(ret.get('fab', '') for ret in return_list))
+                    statuses = list(set(ret.get('status', '') for ret in return_list))
+                    severities = list(set(ret.get('severity', '') for ret in return_list))
+                    reasons = list(set(ret.get('returnReason', '') for ret in return_list))
+                    
+                    context += f"\n팹: {', '.join(fabs)}"
+                    context += f"\n상태: {', '.join(statuses)}"
+                    context += f"\n심각도: {', '.join(severities)}"
+                    context += f"\n주요 반송 사유: {', '.join(reasons[:3])}"  # 상위 3개만
+                    
+                    # 처음 몇 개 반송 정보 포함
+                    context += f"\n\n주요 반송 정보:"
+                    for i, ret in enumerate(return_list[:5]):  # 처음 5개만
+                        context += f"\n{i+1}. 반송ID: {ret.get('returnId', 'N/A')}, LOT: {ret.get('lotNumber', 'N/A')}, 사유: {ret.get('returnReason', 'N/A')}, 심각도: {ret.get('severity', 'N/A')}, 상태: {ret.get('status', 'N/A')}"
+                    
+                    if return_count > 5:
+                        context += f"\n... 외 {return_count - 5}개 추가"
+                        
+            # 요약 통계 정보 추가
+            if context_data.get('summaryStats'):
+                stats = context_data['summaryStats']
+                context += f"\n\n반송 현황 요약:"
+                context += f"\n- 총 반송 건수: {stats.get('totalReturns', 0)}개"
+                context += f"\n- 해결완료: {stats.get('resolvedCount', 0)}개"
+                context += f"\n- 처리중: {stats.get('inProgressCount', 0)}개"
+                context += f"\n- High 심각도: {stats.get('highSeverityCount', 0)}개"
+                        
+            if context_data.get('searchTerm'):
+                context += f"\n검색어: {context_data['searchTerm']}"
+                
+            if context_data.get('selectedFab') and context_data.get('selectedFab') != 'all':
+                context += f"\n선택된 팹: {context_data['selectedFab']}"
+                
+            if context_data.get('selectedSeverity') and context_data.get('selectedSeverity') != 'all':
+                context += f"\n선택된 심각도: {context_data['selectedSeverity']}"
+        
+        context += f"\n\n위 반송 컨텍스트 정보를 바탕으로 사용자의 질문에 대해 구체적이고 유용한 반송 분석을 제공해주세요."
+        
+        data = {"analysis_type": "context_chat"}
+        if context_data:
+            data.update(context_data)
+            
+        return await self.analyze(context, data)

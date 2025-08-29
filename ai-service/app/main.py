@@ -168,6 +168,36 @@ async def get_status_insights(request: AnalysisRequest):
         logger.error("Error generating status insights", error=str(e))
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
+@app.post("/api/analyze/chat", response_model=AnalysisResponse)
+async def analyze_chat_message(request: dict):
+    """Analyze chat message with context using appropriate agent"""
+    try:
+        message = request.get("message", "")
+        agent_type = request.get("agentType", "general")
+        context_data = request.get("context")
+        
+        logger.info("Received chat analysis request", 
+                   message_length=len(message), 
+                   agent_type=agent_type, 
+                   has_context=bool(context_data))
+        
+        if not analysis_service:
+            raise HTTPException(status_code=503, detail="Analysis service not initialized")
+        
+        if not message.strip():
+            raise HTTPException(status_code=400, detail="Message is required")
+        
+        result = await analysis_service.analyze_chat_message(message, agent_type, context_data)
+        
+        logger.info("Chat analysis completed successfully")
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error in chat analysis", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Chat analysis failed: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(

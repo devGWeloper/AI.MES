@@ -316,6 +316,20 @@ export default function ReturnHistoryPage() {
         isOpen={isAIChatOpen}
         onClose={() => setIsAIChatOpen(false)}
         agentType="return"
+        context={{
+          pageType: 'return_history',
+          returnData: filteredData,
+          searchTerm: searchTerm,
+          selectedFab: selectedFab,
+          selectedSeverity: selectedSeverity,
+          totalCount: filteredData.length,
+          summaryStats: {
+            totalReturns: returnData.length,
+            resolvedCount: returnData.filter(ret => ret.status === '해결완료').length,
+            inProgressCount: returnData.filter(ret => ret.status === '처리중').length,
+            highSeverityCount: returnData.filter(ret => ret.severity === 'High').length
+          }
+        }}
       />
     </div>
   );
