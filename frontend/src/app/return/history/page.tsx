@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Search, Filter, Download, Bot, ArrowLeft, AlertTriangle, MessageCircle } from 'lucide-react';
 import AIChatPanel from '@/components/AIChatPanel';
+import { returnApi } from '@/lib/apiClient';
 import type { ApiResponse, ReturnHistory as ReturnHistoryType } from '@/types';
 
 interface ReturnHistory {
@@ -40,21 +40,12 @@ export default function ReturnHistoryPage() {
 
     setLoading(true);
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      
-      // 반송 이력 조회 엔드포인트 호출 (기존 history 엔드포인트에 검색 파라미터 추가)
-      const params = new URLSearchParams();
-      if (selectedFab !== 'all') params.append('fab', selectedFab);
-      if (searchTerm.trim()) params.append('keyword', searchTerm.trim());
-      
-      const res = await axios.get<ApiResponse<any[]>>(
-        `/api/backend/returns/history${params.toString() ? '?' + params.toString() : ''}`,
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        }
+      const response = await returnApi.getReturnHistory(
+        selectedFab !== 'all' ? selectedFab : undefined,
+        searchTerm.trim()
       );
       
-      const raw = (res.data?.data ?? []) as any[];
+      const raw = (response?.data ?? []) as any[];
       const normalizeReturn = (item: any): ReturnHistory => ({
         id: item.id,
         returnId: item.returnId ?? item.return_id,
@@ -83,10 +74,10 @@ export default function ReturnHistoryPage() {
       if (results.length === 0) {
         alert('검색 결과가 없습니다.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('반송 이력 조회 실패', error);
       setReturnData([]);
-      alert('조회 중 오류가 발생했습니다.');
+      alert(error.message || '조회 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }

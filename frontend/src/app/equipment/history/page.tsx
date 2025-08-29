@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Search, Filter, Download, Bot, Settings, MessageCircle } from 'lucide-react';
 import AIChatPanel from '@/components/AIChatPanel';
+import { equipmentApi } from '@/lib/apiClient';
 import type { ApiResponse, EquipmentData as EquipmentDataType } from '@/types';
 
 interface EquipmentHistory {
@@ -37,17 +37,12 @@ export default function EquipmentHistoryPage() {
 
     setLoading(true);
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      
-      // 설비로 검색하는 엔드포인트 호출
-      const res = await axios.get<ApiResponse<any[]>>(
-        `/api/backend/equipment/search?keyword=${encodeURIComponent(searchTerm.trim())}&fab=${selectedFab !== 'all' ? selectedFab : ''}`,
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        }
+      const response = await equipmentApi.searchEquipment(
+        searchTerm.trim(),
+        selectedFab !== 'all' ? selectedFab : undefined
       );
       
-      const raw = (res.data?.data ?? []) as any[];
+      const raw = (response?.data ?? []) as any[];
       const normalizeEquipment = (item: any): EquipmentHistory => ({
         id: item.id,
         equipmentId: item.equipmentId ?? item.equipment_id,
@@ -66,10 +61,10 @@ export default function EquipmentHistoryPage() {
       if (raw.length === 0) {
         alert('검색 결과가 없습니다.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('설비 이력 조회 실패', error);
       setEquipmentData([]);
-      alert('조회 중 오류가 발생했습니다.');
+      alert(error.message || '조회 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
