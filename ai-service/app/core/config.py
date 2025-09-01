@@ -21,20 +21,16 @@ class Settings(BaseSettings):
     OPENAI_TEMPERATURE: float = 0.7
     OPENAI_MAX_TOKENS: int = 2000
     
-    # Vector Store Configuration
-    VECTOR_STORE_TYPE: str = "faiss"  # or "chroma"
-    VECTOR_STORE_PATH: str = "./data/vector_store"
-    EMBEDDING_MODEL: str = "text-embedding-ada-002"
+    # 🔥 사내 수정 포인트: 필요시 벡터 스토어 설정 추가
+    # VECTOR_STORE_TYPE: str = "faiss"
+    # VECTOR_STORE_PATH: str = "./data/vector_store" 
+    # EMBEDDING_MODEL: str = "text-embedding-ada-002"
     
-    # Database Configuration (for tools)
-    # M14 Database
-    M14_DB_URL: str = os.getenv("M14_DB_URL", "oracle://m14_user:m14_password@localhost:1521/M14DB")
-    
-    # M15 Database
-    M15_DB_URL: str = os.getenv("M15_DB_URL", "oracle://m15_user:m15_password@localhost:1521/M15DB")
-    
-    # M16 Database
-    M16_DB_URL: str = os.getenv("M16_DB_URL", "oracle://m16_user:m16_password@localhost:1521/M16DB")
+    # Database Configuration (for tools) - Currently using mock data
+    # TODO: Implement actual database connections when needed
+    # M14_DB_URL: str = os.getenv("M14_DB_URL", "")
+    # M15_DB_URL: str = os.getenv("M15_DB_URL", "")
+    # M16_DB_URL: str = os.getenv("M16_DB_URL", "")
     
     # Agent Configuration
     MAX_ITERATIONS: int = 10

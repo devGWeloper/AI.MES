@@ -7,11 +7,7 @@ from dotenv import load_dotenv
 
 from app.core.config import settings
 from app.services.analysis_service import AnalysisService
-from app.models.schemas import (
-    AnalysisRequest, 
-    AnalysisResponse,
-    HealthResponse
-)
+from app.models.schemas import AnalysisResponse, HealthResponse
 
 # Load environment variables
 load_dotenv()
@@ -96,77 +92,8 @@ async def health_check():
         version="1.0.0"
     )
 
-@app.post("/api/analyze/lot", response_model=AnalysisResponse)
-async def analyze_lot_data(request: AnalysisRequest):
-    """Analyze lot data using AI"""
-    try:
-        logger.info("Received lot analysis request", context=request.context, type=request.type)
-        
-        if not analysis_service:
-            raise HTTPException(status_code=503, detail="Analysis service not initialized")
-        
-        result = await analysis_service.analyze_lot_data(request)
-        
-        logger.info("Lot analysis completed successfully")
-        return result
-        
-    except Exception as e:
-        logger.error("Error in lot analysis", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
-
-@app.post("/api/analyze/equipment", response_model=AnalysisResponse)
-async def analyze_equipment_data(request: AnalysisRequest):
-    """Analyze equipment data using AI"""
-    try:
-        logger.info("Received equipment analysis request", context=request.context, type=request.type)
-        
-        if not analysis_service:
-            raise HTTPException(status_code=503, detail="Analysis service not initialized")
-        
-        result = await analysis_service.analyze_equipment_data(request)
-        
-        logger.info("Equipment analysis completed successfully")
-        return result
-        
-    except Exception as e:
-        logger.error("Error in equipment analysis", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
-
-@app.post("/api/analyze/return", response_model=AnalysisResponse)
-async def analyze_return_data(request: AnalysisRequest):
-    """Analyze return data using AI"""
-    try:
-        logger.info("Received return analysis request", context=request.context, type=request.type)
-        
-        if not analysis_service:
-            raise HTTPException(status_code=503, detail="Analysis service not initialized")
-        
-        result = await analysis_service.analyze_return_data(request)
-        
-        logger.info("Return analysis completed successfully")
-        return result
-        
-    except Exception as e:
-        logger.error("Error in return analysis", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
-
-@app.post("/api/analyze/status", response_model=AnalysisResponse)
-async def get_status_insights(request: AnalysisRequest):
-    """Get status monitoring insights using AI"""
-    try:
-        logger.info("Received status insights request", context=request.context, type=request.type)
-        
-        if not analysis_service:
-            raise HTTPException(status_code=503, detail="Analysis service not initialized")
-        
-        result = await analysis_service.get_status_insights(request)
-        
-        logger.info("Status insights generated successfully")
-        return result
-        
-    except Exception as e:
-        logger.error("Error generating status insights", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+# 🔥 사내 수정 포인트: 필요시 추가 엔드포인트 구현
+# 현재는 채팅 기반 분석만 지원하며, 필요에 따라 특화된 엔드포인트 추가 가능
 
 @app.post("/api/analyze/chat", response_model=AnalysisResponse)
 async def analyze_chat_message(request: dict):

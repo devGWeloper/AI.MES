@@ -4,56 +4,54 @@ from langchain.tools import BaseTool
 import structlog
 
 from app.agents.base_agent import BaseAgent
-from app.tools.equipment_tools import EquipmentStatusTool, EquipmentHistoryTool, EquipmentAlertTool
+from app.tools.context_tool import ContextTool
 
 logger = structlog.get_logger()
 
 class EquipmentAgent(BaseAgent):
-    """Specialized agent for equipment monitoring and analysis"""
+    """설비 모니터링 및 분석 전문 에이전트"""
     
-    def __init__(self):
-        tools = [
-            EquipmentStatusTool(),
-            EquipmentHistoryTool(),
-            EquipmentAlertTool()
-        ]
+    def __init__(self, context_data: Optional[Dict[str, Any]] = None):
+        tools = [ContextTool(context_data)]
         super().__init__(
-            name="Equipment Analysis Agent",
-            description="설비 모니터링, 성능 분석 및 예측 정비 전문 AI Agent",
+            name="설비 분석 에이전트",
+            description="설비 모니터링, 성능 분석 및 예측 정비 전문 AI",
             tools=tools
         )
+        self.context_data = context_data or {}
     
     def _get_prompt_template(self) -> ChatPromptTemplate:
-        """Get prompt template for equipment analysis"""
+        """설비 분석용 프롬프트 템플릿"""
+        # 🔥 사내 수정 포인트: 프롬프트를 사내 설비 관리 정책에 맞게 수정
         system_prompt = """
-당신은 반도체 제조 설비 모니터링 및 분석 전문가입니다.
+당신은 반도체 제조 설비 관리 전문 AI입니다.
 
-주요 역할:
-1. 설비 실시간 상태 모니터링 및 분석
-2. 설비 성능 및 가동률 평가
-3. 알람 및 이상 징후 분석
-4. 예측 정비 및 유지보수 계획 수립
-5. 설비 최적화 및 효율성 개선 방안 제시
+🎯 주요 업무:
+- 설비 가동률 분석 및 최적화
+- 설비 이상 징후 감지 및 대응방안 제시
+- 예방 정비 스케줄 최적화
+- 설비별 성능 비교 분석
 
-분석 시 고려사항:
-- 각 팹(M14, M15, M16)별 설비 특성
-- 설비별 온도, 압력, 가동률 등 핵심 지표 분석
-- 알람 및 경고 신호의 심각도 평가
-- 과거 정비 이력 및 패턴 분석
-- 설비 간 연관성 및 생산 라인 영향도 고려
+📊 분석 기준:
+- 설비별 특성 및 운영 임계값
+- 정비 이력과 성능 상관관계
+- 생산 계획과 설비 할당 효율성
+- 예방 정비 시점 판단
 
-출력 형식:
-- 한국어로 명확하고 이해하기 쉽게 작성
-- 구체적인 수치와 상태 정보 포함
+💡 출력 가이드라인:
+- 한국어로 명확하고 구체적으로 작성
 - 긴급도에 따른 우선순위 제시
-- 구체적인 조치 방안 및 일정 제안
+- 실행 가능한 조치 방안 포함
+- 수치 데이터 기반 객관적 분석
 
-사용 가능한 도구:
-- equipment_status_query: 설비 실시간 상태 조회
-- equipment_history_query: 설비 작업 이력 조회
-- equipment_alert_query: 설비 알람 및 경고 조회
+🔧 사용 도구:
+- context_analyzer: 현재 화면의 설비 데이터 분석
 
-각 요청에 대해 관련 설비 정보를 먼저 조회한 후, 종합적인 분석과 조치 방안을 제공하세요.
+🔥 TODO: 사내 설비 관리 정책에 맞게 수정 필요
+- 실제 설비명과 코드로 변경 (EQP-001 → 실제 설비명)
+- 사내 정비 기준 추가 (온도/압력/가동률 임계값)
+- 알람 임계값을 실제 값으로 설정
+- 정비 담당팀 및 연락처 정보 추가
         """
         
         return ChatPromptTemplate.from_messages([
@@ -63,122 +61,21 @@ class EquipmentAgent(BaseAgent):
             MessagesPlaceholder(variable_name="agent_scratchpad")
         ])
     
-    async def analyze_equipment_status(self, fab: Optional[str] = None) -> str:
-        """Analyze current equipment status"""
-        context = f"현재 설비 상태를 종합적으로 분석해주세요"
-        if fab:
-            context += f" (팹: {fab})"
-        
-        context += """
-        
-다음 관점에서 분석해주세요:
-1. 설비별 현재 상태 및 가동률
-2. 알람 및 경고 상황 분석
-3. 성능 지표 (온도, 압력 등) 평가
-4. 즉시 조치가 필요한 설비 식별
-5. 전체적인 설비 운영 효율성
-        """
-        
-        return await self.analyze(context, {"fab": fab, "analysis_type": "status"})
-    
-    async def analyze_equipment_performance(self, fab: Optional[str] = None) -> str:
-        """Analyze equipment performance and efficiency"""
-        context = f"설비 성능과 효율성을 분석해주세요"
-        if fab:
-            context += f" (팹: {fab})"
-        
-        context += """
-        
-다음 관점에서 분석해주세요:
-1. 설비별 가동률 및 활용도
-2. 처리 시간 및 생산성 지표
-3. 설비 간 성능 비교
-4. 병목 설비 및 개선 포인트
-5. 최적화 방안 및 효율성 개선 제안
-        """
-        
-        return await self.analyze(context, {"fab": fab, "analysis_type": "performance"})
-    
-    async def analyze_equipment_alerts(self, fab: Optional[str] = None) -> str:
-        """Analyze equipment alerts and maintenance needs"""
-        context = f"설비 알람 및 정비 필요사항을 분석해주세요"
-        if fab:
-            context += f" (팹: {fab})"
-        
-        context += """
-        
-다음 관점에서 분석해주세요:
-1. 현재 활성화된 알람 분석
-2. 알람 심각도 및 우선순위 평가
-3. 정비 필요 설비 식별
-4. 예측 정비 계획 수립
-5. 예방 조치 및 모니터링 강화 방안
-        """
-        
-        return await self.analyze(context, {"fab": fab, "analysis_type": "alerts"})
-    
-    async def predict_maintenance_needs(self, equipment_id: Optional[str] = None) -> str:
-        """Predict maintenance needs for equipment"""
-        context = f"설비 예측 정비 필요성을 분석해주세요"
-        if equipment_id:
-            context += f" (설비 ID: {equipment_id})"
-        
-        context += """
-        
-다음 관점에서 예측 분석해주세요:
-1. 현재 설비 상태 기반 정비 시기 예측
-2. 과거 정비 패턴 및 주기 분석
-3. 성능 저하 징후 및 위험 요소
-4. 최적 정비 스케줄 제안
-5. 예방 정비를 통한 효과 및 비용 절감
-        """
-        
-        return await self.analyze(context, {"equipment_id": equipment_id, "analysis_type": "prediction"})
-    
     async def analyze_with_context(self, user_message: str, context_data: Optional[Dict[str, Any]] = None) -> str:
-        """컨텍스트 데이터를 활용한 사용자 질문 분석"""
-        context = f"사용자 질문: {user_message}"
+        """컨텍스트 기반 사용자 질문 분석 - 메인 분석 메서드"""
+        # 🔥 사내 수정 포인트: 설비 관련 컨텍스트 데이터 해석 로직
         
-        # 컨텍스트 데이터 분석 및 프롬프트에 포함
         if context_data:
-            if context_data.get('pageType') == 'equipment_history':
-                context += f"\n\n현재 사용자는 Equipment History 화면에 있습니다."
-                
-            if context_data.get('equipmentData'):
-                equipment_list = context_data['equipmentData']
-                equipment_count = len(equipment_list)
-                context += f"\n화면에 표시된 설비 데이터: {equipment_count}개"
-                
-                # 설비 데이터 요약
-                if equipment_list:
-                    fabs = list(set(eq.get('fab', '') for eq in equipment_list))
-                    statuses = list(set(eq.get('status', '') for eq in equipment_list))
-                    results = list(set(eq.get('result', '') for eq in equipment_list))
-                    context += f"\n팹: {', '.join(fabs)}"
-                    context += f"\n상태: {', '.join(statuses)}"
-                    context += f"\n결과: {', '.join(results)}"
-                    
-                    # 처음 몇 개 설비 정보 포함
-                    context += f"\n\n주요 설비 정보:"
-                    for i, eq in enumerate(equipment_list[:5]):  # 처음 5개만
-                        context += f"\n{i+1}. 설비ID: {eq.get('equipmentId', 'N/A')}, 설비명: {eq.get('equipmentName', 'N/A')}, 상태: {eq.get('status', 'N/A')}, 팹: {eq.get('fab', 'N/A')}, 결과: {eq.get('result', 'N/A')}"
-                    
-                    if equipment_count > 5:
-                        context += f"\n... 외 {equipment_count - 5}개 추가"
-                        
-            if context_data.get('searchTerm'):
-                context += f"\n검색어: {context_data['searchTerm']}"
-                
-            if context_data.get('selectedFab') and context_data.get('selectedFab') != 'all':
-                context += f"\n선택된 팹: {context_data['selectedFab']}"
-                
-            if context_data.get('selectedStatus') and context_data.get('selectedStatus') != 'all':
-                context += f"\n선택된 상태: {context_data['selectedStatus']}"
+            self.tools = [ContextTool(context_data)]
+            self.agent_executor = self._create_agent()
         
-        context += f"\n\n위 설비 컨텍스트 정보를 바탕으로 사용자의 질문에 대해 구체적이고 유용한 설비 분석을 제공해주세요."
+        prompt = f"""사용자 질문: {user_message}
+
+현재 화면 정보:
+- 페이지 타입: {context_data.get('pageType', 'N/A') if context_data else 'N/A'}
+- 설비 수: {context_data.get('totalCount', 0) if context_data else 0}개
+
+위 컨텍스트를 바탕으로 사용자 질문에 대해 구체적이고 실용적인 설비 분석을 제공해주세요.
+먼저 context_analyzer 도구를 사용하여 현재 설비 데이터를 분석한 후 답변하세요."""
         
-        data = {"analysis_type": "context_chat"}
-        if context_data:
-            data.update(context_data)
-            
-        return await self.analyze(context, data)
+        return await self.analyze(prompt, context_data or {})

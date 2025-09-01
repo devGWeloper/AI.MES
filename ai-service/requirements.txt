@@ -1,32 +1,36 @@
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
+fastapi==0.108.0
+uvicorn[standard]==0.25.0
 python-multipart==0.0.6
 python-dotenv==1.0.0
 
 # LangChain and AI libraries
-langchain==0.1.0
-langchain-openai==0.0.2
-langchain-community==0.0.10
-openai==1.6.1
+langchain==0.1.17
+langchain-openai==0.1.7
+langchain-community==0.0.36
+langchain-core==0.1.52
+openai==1.35.0
 
-# Vector stores
-faiss-cpu==1.7.4
-chromadb==0.4.18
+# 🔥 사내 수정 포인트: 필요시 추가 의존성 설치
+# Vector stores (필요시 주석 해제)
+# faiss-cpu==1.7.4
+# chromadb==0.4.18
 
-# Data processing
-pandas==2.1.4
-numpy==1.25.2
+# Data processing (필요시 주석 해제)  
+# pandas==2.1.4
+# numpy==1.25.2
 
-# Database
-sqlalchemy==2.0.25
-cx_Oracle==8.3.0
+# Database (실제 DB 연동시 주석 해제)
+# sqlalchemy==2.0.25
+# cx_Oracle==8.3.0  # Oracle DB 사용시
+# psycopg2-binary==2.9.9  # PostgreSQL 사용시
+# pymysql==1.1.0  # MySQL 사용시
 
 # Utilities
-pydantic==2.5.2
-pydantic-settings==2.1.0
-httpx==0.25.2
-aiofiles==23.2.0
+pydantic==2.8.2
+pydantic-settings==2.4.0
+httpx==0.27.0
+aiofiles==24.1.0
 
 # Logging and monitoring
-structlog==23.2.0
-prometheus-client==0.19.0
+structlog==24.2.0
+prometheus-client==0.20.0
