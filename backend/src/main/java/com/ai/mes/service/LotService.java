@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -51,11 +52,20 @@ public class LotService {
                 log.debug("Fetched {} rows from {} datasource", result.size(), fab);
                 return result;
             }
-            // fab 미지정 시 전체 팹에서 취합
+            // fab 미지정 시 전체 팹에서 병렬 취합
+            CompletableFuture<List<LotData>> m14Future = CompletableFuture
+                .supplyAsync(() -> safeSelectAll(m14LotDataMapper, "M14"));
+            CompletableFuture<List<LotData>> m15Future = CompletableFuture
+                .supplyAsync(() -> safeSelectAll(m15LotDataMapper, "M15"));
+            CompletableFuture<List<LotData>> m16Future = CompletableFuture
+                .supplyAsync(() -> safeSelectAll(m16LotDataMapper, "M16"));
+            
+            // 모든 결과 수집
             List<LotData> merged = new ArrayList<>();
-            merged.addAll(safeSelectAll(m14LotDataMapper, "M14"));
-            merged.addAll(safeSelectAll(m15LotDataMapper, "M15"));
-            merged.addAll(safeSelectAll(m16LotDataMapper, "M16"));
+            merged.addAll(m14Future.join());
+            merged.addAll(m15Future.join());
+            merged.addAll(m16Future.join());
+            
             // 생성일 최신순 정렬 (null 안전)
             merged.sort(Comparator.comparing(LotData::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed());
             log.debug("Merged rows across fabs: {}", merged.size());
@@ -101,10 +111,17 @@ public class LotService {
             if (fab != null && !fab.isEmpty()) {
                 results.addAll(searchInFab(keyword, fab, status));
             } else {
-                // 팹 미지정 시 모든 팹에서 검색
-                results.addAll(searchInFab(keyword, "M14", status));
-                results.addAll(searchInFab(keyword, "M15", status));
-                results.addAll(searchInFab(keyword, "M16", status));
+                // 팹 미지정 시 모든 팹에서 병렬 검색
+                CompletableFuture<List<LotData>> m14SearchFuture = CompletableFuture
+                    .supplyAsync(() -> searchInFab(keyword, "M14", status));
+                CompletableFuture<List<LotData>> m15SearchFuture = CompletableFuture
+                    .supplyAsync(() -> searchInFab(keyword, "M15", status));
+                CompletableFuture<List<LotData>> m16SearchFuture = CompletableFuture
+                    .supplyAsync(() -> searchInFab(keyword, "M16", status));
+                
+                results.addAll(m14SearchFuture.join());
+                results.addAll(m15SearchFuture.join());
+                results.addAll(m16SearchFuture.join());
             }
             
             // 생성일 최신순 정렬

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -60,19 +61,34 @@ public class ReturnService {
                 if (fab != null && !fab.isEmpty()) {
                     results.addAll(searchReturnInFab(keyword, fab));
                 } else {
-                    // 팹 미지정 시 모든 팹에서 검색
-                    results.addAll(searchReturnInFab(keyword, "M14"));
-                    results.addAll(searchReturnInFab(keyword, "M15"));
-                    results.addAll(searchReturnInFab(keyword, "M16"));
+                    // 팹 미지정 시 모든 팹에서 병렬 검색
+                    CompletableFuture<List<ReturnHistory>> m14SearchFuture = CompletableFuture
+                        .supplyAsync(() -> searchReturnInFab(keyword, "M14"));
+                    CompletableFuture<List<ReturnHistory>> m15SearchFuture = CompletableFuture
+                        .supplyAsync(() -> searchReturnInFab(keyword, "M15"));
+                    CompletableFuture<List<ReturnHistory>> m16SearchFuture = CompletableFuture
+                        .supplyAsync(() -> searchReturnInFab(keyword, "M16"));
+                    
+                    results.addAll(m14SearchFuture.join());
+                    results.addAll(m15SearchFuture.join());
+                    results.addAll(m16SearchFuture.join());
                 }
             } else {
                 // 키워드 없이 팹별 전체 조회
                 if (fab != null && !fab.isEmpty()) {
                     results.addAll(fetchReturnByFab(fab));
                 } else {
-                    results.addAll(safeSelectAllReturns(m14ReturnHistoryMapper, "M14"));
-                    results.addAll(safeSelectAllReturns(m15ReturnHistoryMapper, "M15"));
-                    results.addAll(safeSelectAllReturns(m16ReturnHistoryMapper, "M16"));
+                    // 팹 미지정 시 전체 팹에서 병렬 조회
+                    CompletableFuture<List<ReturnHistory>> m14Future = CompletableFuture
+                        .supplyAsync(() -> safeSelectAllReturns(m14ReturnHistoryMapper, "M14"));
+                    CompletableFuture<List<ReturnHistory>> m15Future = CompletableFuture
+                        .supplyAsync(() -> safeSelectAllReturns(m15ReturnHistoryMapper, "M15"));
+                    CompletableFuture<List<ReturnHistory>> m16Future = CompletableFuture
+                        .supplyAsync(() -> safeSelectAllReturns(m16ReturnHistoryMapper, "M16"));
+                    
+                    results.addAll(m14Future.join());
+                    results.addAll(m15Future.join());
+                    results.addAll(m16Future.join());
                 }
             }
             

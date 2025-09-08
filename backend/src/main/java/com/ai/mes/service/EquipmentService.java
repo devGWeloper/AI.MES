@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -95,10 +96,17 @@ public class EquipmentService {
             if (fab != null && !fab.isEmpty()) {
                 results.addAll(searchEquipmentInFab(keyword, fab, status));
             } else {
-                // 팹 미지정 시 모든 팹에서 검색
-                results.addAll(searchEquipmentInFab(keyword, "M14", status));
-                results.addAll(searchEquipmentInFab(keyword, "M15", status));
-                results.addAll(searchEquipmentInFab(keyword, "M16", status));
+                // 팹 미지정 시 모든 팹에서 병렬 검색
+                CompletableFuture<List<EquipmentData>> m14SearchFuture = CompletableFuture
+                    .supplyAsync(() -> searchEquipmentInFab(keyword, "M14", status));
+                CompletableFuture<List<EquipmentData>> m15SearchFuture = CompletableFuture
+                    .supplyAsync(() -> searchEquipmentInFab(keyword, "M15", status));
+                CompletableFuture<List<EquipmentData>> m16SearchFuture = CompletableFuture
+                    .supplyAsync(() -> searchEquipmentInFab(keyword, "M16", status));
+                
+                results.addAll(m14SearchFuture.join());
+                results.addAll(m15SearchFuture.join());
+                results.addAll(m16SearchFuture.join());
             }
             
             // 생성일 최신순 정렬
