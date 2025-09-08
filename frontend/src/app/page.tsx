@@ -50,7 +50,7 @@ export default function Home() {
           <div className="flex items-center justify-center gap-3">
             <button
               className="btn-primary px-6 py-3 bg-white text-slate-900 hover:bg-slate-100"
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push('/login')}
             >
               시스템 시작하기
             </button>

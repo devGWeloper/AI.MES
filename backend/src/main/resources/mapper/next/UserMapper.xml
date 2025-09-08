@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ai.mes.mapper.next.UserMapper">
+
+    <!-- 결과 매핑 -->
+    <resultMap id="UserResultMap" type="com.ai.mes.model.User">
+        <id column="id" property="id" />
+        <result column="username" property="username" />
+        <result column="password" property="password" />
+        <result column="name" property="name" />
+        <result column="email" property="email" />
+        <result column="department" property="department" />
+        <result column="role" property="role" />
+        <result column="active" property="active" />
+        <result column="last_login_at" property="lastLoginAt" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+    </resultMap>
+
+    <!-- 사용자명으로 사용자 조회 -->
+    <select id="selectByUsername" parameterType="string" resultMap="UserResultMap">
+        SELECT * FROM users 
+        WHERE username = #{username} AND active = true
+    </select>
+
+    <!-- 사용자명과 비밀번호로 사용자 조회 (로그인) -->
+    <select id="selectByUsernameAndPassword" resultMap="UserResultMap">
+        SELECT * FROM users 
+        WHERE username = #{username} 
+        AND password = #{password} 
+        AND active = true
+    </select>
+
+    <!-- ID로 사용자 조회 -->
+    <select id="selectById" parameterType="long" resultMap="UserResultMap">
+        SELECT * FROM users 
+        WHERE id = #{id} AND active = true
+    </select>
+
+    <!-- 이메일로 사용자 조회 -->
+    <select id="selectByEmail" parameterType="string" resultMap="UserResultMap">
+        SELECT * FROM users 
+        WHERE email = #{email} AND active = true
+    </select>
+
+    <!-- 마지막 로그인 시간 업데이트 -->
+    <update id="updateLastLoginAt">
+        UPDATE users 
+        SET last_login_at = #{lastLoginAt},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE username = #{username}
+    </update>
+
+    <!-- 활성 사용자 여부 확인 -->
+    <select id="isActiveUser" parameterType="string" resultType="boolean">
+        SELECT COUNT(*) > 0 
+        FROM users 
+        WHERE username = #{username} AND active = true
+    </select>
+
+    <!-- 사용자명 존재 여부 확인 -->
+    <select id="existsByUsername" parameterType="string" resultType="boolean">
+        SELECT COUNT(*) > 0 
+        FROM users 
+        WHERE username = #{username}
+    </select>
+
+    <!-- 이메일 존재 여부 확인 -->
+    <select id="existsByEmail" parameterType="string" resultType="boolean">
+        SELECT COUNT(*) > 0 
+        FROM users 
+        WHERE email = #{email}
+    </select>
+
+</mapper>

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   ChevronDown, 
   Home, 
@@ -11,7 +12,8 @@ import {
   Truck,
   History,
   Activity,
-  Accessibility
+  User,
+  LogOut
 } from 'lucide-react';
 
 interface MenuItem {
@@ -75,9 +77,12 @@ const menuItems: MenuItem[] = [
 export default function Navigation() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isHovering, setIsHovering] = useState<string | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { user, logout, isAuthenticated } = useAuth();
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const userMenuRef = useRef<HTMLDivElement | null>(null);
   
 
   // 랜딩페이지(/)에서는 네비게이션을 숨김 (모든 훅 선언 이후에 처리)
@@ -91,20 +96,31 @@ export default function Navigation() {
           setOpenDropdown(null);
         }
       }
+      
+      if (userMenuOpen && userMenuRef.current) {
+        if (!userMenuRef.current.contains(event.target as Node)) {
+          setUserMenuOpen(false);
+        }
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [openDropdown]);
+  }, [openDropdown, userMenuOpen]);
 
   // (접근성 토글 제거)
 
   // 모든 훅 호출 이후에 조건부 렌더링 수행 (Hook 순서 불변)
-  if (pathname === '/') {
+  if (pathname === '/' || pathname === '/login') {
     return null;
   }
+
+  const handleLogout = async () => {
+    await logout();
+    setUserMenuOpen(false);
+  };
 
   const handleMouseEnter = (itemTitle: string) => {
     setIsHovering(itemTitle);
@@ -234,7 +250,44 @@ export default function Navigation() {
               <span className="text-xs text-slate-500 group-hover:text-slate-600 transition-colors">Manufacturing Execution System</span>
             </div>
           </Link>
-          <div className="flex items-center gap-2" />
+          {/* User Menu */}
+          {isAuthenticated && user && (
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors focus-ring"
+                aria-haspopup="menu"
+                aria-expanded={userMenuOpen}
+              >
+                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-white" />
+                </div>
+                <div className="text-left">
+                  <div className="text-sm font-medium text-slate-900">{user.name}</div>
+                  <div className="text-xs text-slate-500">{user.role}</div>
+                </div>
+                <ChevronDown className={`w-4 h-4 text-slate-600 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {userMenuOpen && (
+                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-slate-200 z-50" role="menu">
+                  <div className="px-4 py-3 border-b border-slate-100">
+                    <p className="text-sm font-medium text-slate-900">{user.name}</p>
+                    <p className="text-xs text-slate-500">{user.email}</p>
+                    <p className="text-xs text-slate-500">{user.department}</p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-left text-red-600 hover:bg-red-50 transition-colors"
+                    role="menuitem"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>로그아웃</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Horizontal Menu */}

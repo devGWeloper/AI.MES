@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import { AuthProvider } from '@/contexts/AuthContext';
+import AuthWrapper from '@/components/AuthWrapper';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -24,13 +26,17 @@ export default function RootLayout({
           <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
           <div className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl" />
         </div>
-        <div className="min-h-screen flex flex-col">
-          <Navigation />
-          <main className="flex-1">
-            {children}
-          </main>
-          <Footer />
-        </div>
+        <AuthProvider>
+          <AuthWrapper>
+            <div className="min-h-screen flex flex-col">
+              <Navigation />
+              <main className="flex-1">
+                {children}
+              </main>
+              <Footer />
+            </div>
+          </AuthWrapper>
+        </AuthProvider>
       </body>
     </html>
   );

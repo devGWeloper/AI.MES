@@ -104,6 +104,19 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
+      
+    # Next Login Database
+    next:
+      jdbc-url: ${NEXT_DB_URL}
+      username: ${NEXT_DB_USERNAME}
+      password: ${NEXT_DB_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+      # PostgreSQL 연결 풀 설정
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
 
 ---
 # Production Profile
@@ -148,6 +161,19 @@ spring:
       # PostgreSQL 연결 풀 설정
       maximum-pool-size: 20
       minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      
+    # Next Login Database
+    next:
+      jdbc-url: ${NEXT_DB_URL}
+      username: ${NEXT_DB_USERNAME}
+      password: ${NEXT_DB_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+      # PostgreSQL 연결 풀 설정
+      maximum-pool-size: 10
+      minimum-idle: 2
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000

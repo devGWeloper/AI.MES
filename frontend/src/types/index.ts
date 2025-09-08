@@ -92,3 +92,27 @@ export interface AIAnalysisResponse {
   alerts?: string[];
   timestamp: string;
 }
+
+// Auth related types
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  username: string;
+  name: string;
+  email: string;
+  department: string;
+  role: string;
+  expiresIn: number;
+}
+
+export interface UserInfo {
+  username: string;
+  name: string;
+  email: string;
+  department: string;
+  role: string;
+}

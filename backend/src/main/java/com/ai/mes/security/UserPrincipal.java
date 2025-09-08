@@ -22,13 +22,17 @@ public class UserPrincipal implements UserDetails {
     private String email;
     private Collection<? extends GrantedAuthority> authorities;
 
-    public static UserPrincipal create(String username, String password, String email) {
+    public static UserPrincipal create(String id, String username, String password, String email, String role) {
+        Collection<GrantedAuthority> authorities = Collections.singletonList(
+            new SimpleGrantedAuthority("ROLE_" + (role != null ? role.toUpperCase() : "USER"))
+        );
+        
         return new UserPrincipal(
-                username,
+                id,
                 username,
                 password,
                 email,
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                authorities
         );
     }
 
