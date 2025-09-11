@@ -36,6 +36,7 @@ public class AuthService {
 
     @Transactional
     public LoginResponse login(LoginRequest loginRequest) {
+        // 보안을 위해 사용자명만 로그에 기록 (LoginRequest 전체 객체는 로그에 남기지 않음)
         log.info("로그인 시도: {}", loginRequest.getUsername());
         
         try {
@@ -48,9 +49,9 @@ public class AuthService {
             
             User user = userOptional.get();
             
-            // 비밀번호 검증
+            // 비밀번호 검증 (민감한 정보는 로그에 남기지 않음)
             if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-                log.warn("비밀번호 불일치: {}", loginRequest.getUsername());
+                log.warn("인증 실패 - 사용자: {}", loginRequest.getUsername());
                 throw new BadCredentialsException("잘못된 사용자명 또는 비밀번호입니다.");
             }
             
@@ -82,9 +83,15 @@ public class AuthService {
                 jwtExpirationInMs / 1000 // seconds
             );
             
+        } catch (BadCredentialsException e) {
+            // 인증 실패는 구체적인 에러 메시지를 로그에 남기지 않음 (보안상 이유)
+            log.warn("로그인 인증 실패 - 사용자: {}", loginRequest.getUsername());
+            throw e;
         } catch (Exception e) {
-            log.error("로그인 실패: {}", e.getMessage());
-            throw new BadCredentialsException("로그인에 실패했습니다: " + e.getMessage());
+            // 시스템 에러만 상세 로그 기록 (비밀번호 관련 정보는 제외)
+            log.error("로그인 시스템 오류 - 사용자: {} | 오류: {}", 
+                loginRequest.getUsername(), e.getClass().getSimpleName());
+            throw new BadCredentialsException("로그인 처리 중 오류가 발생했습니다.");
         }
     }
     

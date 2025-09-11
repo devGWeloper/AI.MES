@@ -1,11 +1,25 @@
 import { backendApi } from './client';
 import { LoginRequest, LoginResponse, UserInfo, ApiResponse } from '@/types';
+import { safeLog, maskSensitiveData } from '@/common/security';
 
 export const authApi = {
   // 로그인
   login: async (credentials: LoginRequest): Promise<ApiResponse<LoginResponse>> => {
-    const response = await backendApi.post<ApiResponse<LoginResponse>>('/auth/login', credentials);
-    return response.data;
+    // 보안: 로그인 시도 로그 (비밀번호 마스킹)
+    safeLog.info('로그인 시도:', maskSensitiveData(credentials));
+    
+    try {
+      const response = await backendApi.post<ApiResponse<LoginResponse>>('/auth/login', credentials);
+      
+      // 성공 로그 (응답 데이터에서 토큰 마스킹)
+      safeLog.info('로그인 성공:', { username: credentials.username });
+      
+      return response.data;
+    } catch (error) {
+      // 실패 로그 (에러 정보만, 민감한 데이터 제외)
+      safeLog.error('로그인 실패:', { username: credentials.username, error: 'Authentication failed' });
+      throw error;
+    }
   },
 
   // 로그아웃

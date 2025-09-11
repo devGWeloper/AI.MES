@@ -37,7 +37,17 @@ class BaseApiClient {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
-        console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, config.params || config.data);
+        
+        // 보안: 민감한 정보가 포함된 요청은 로깅하지 않음
+        const sensitiveEndpoints = ['/auth/login', '/auth/register', '/users/change-password'];
+        const isSensitiveRequest = sensitiveEndpoints.some(endpoint => config.url?.includes(endpoint));
+        
+        if (isSensitiveRequest) {
+          console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url} [PROTECTED DATA]`);
+        } else {
+          console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, config.params || config.data);
+        }
+        
         return config;
       },
       (error) => {
@@ -49,11 +59,28 @@ class BaseApiClient {
     // 백엔드 응답 인터셉터
     this.backendApi.interceptors.response.use(
       (response: AxiosResponse) => {
-        console.log(`[API Response] ${response.config.url}`, response.data);
+        // 보안: 민감한 정보가 포함된 응답은 로깅하지 않음
+        const sensitiveEndpoints = ['/auth/login', '/auth/register', '/auth/me', '/users/change-password'];
+        const isSensitiveResponse = sensitiveEndpoints.some(endpoint => response.config.url?.includes(endpoint));
+        
+        if (isSensitiveResponse) {
+          console.log(`[API Response] ${response.config.url} [PROTECTED DATA]`);
+        } else {
+          console.log(`[API Response] ${response.config.url}`, response.data);
+        }
+        
         return response;
       },
       (error: AxiosError) => {
-        console.error('[Backend API Error]', error.response?.data || error.message);
+        // 에러 응답에서도 민감한 정보 보호
+        const sensitiveEndpoints = ['/auth/login', '/auth/register', '/users/change-password'];
+        const isSensitiveError = sensitiveEndpoints.some(endpoint => error.config?.url?.includes(endpoint));
+        
+        if (isSensitiveError) {
+          console.error('[Backend API Error] Authentication/Sensitive endpoint error');
+        } else {
+          console.error('[Backend API Error]', error.response?.data || error.message);
+        }
         
         // 401 에러시 토큰 삭제 및 로그인 페이지로 리다이렉트
         if (error.response?.status === 401) {

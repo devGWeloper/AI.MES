@@ -66,6 +66,15 @@ export {
   storageKeys,
 } from './storage';
 
+// 보안 유틸리티
+export {
+  maskSensitiveData,
+  createSafeLogObject,
+  maskSensitiveUrl,
+  safeLog,
+  protectDevTools,
+} from './security';
+
 // 타입 정의 (필요시 추가)
 export type StorageKey = keyof typeof import('./storage').storageKeys;
 
@@ -75,3 +84,4 @@ export * from './formatters';
 export * from './validators';
 export * from './helpers';
 export * from './storage';
+export * from './security';

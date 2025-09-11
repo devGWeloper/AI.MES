@@ -99,6 +99,17 @@ export interface LoginRequest {
   password: string;
 }
 
+// 보안을 위한 LoginRequest 확장 (로깅용)
+export interface SafeLoginRequest {
+  username: string;
+  password: '[PROTECTED]';
+}
+
+// LoginRequest를 안전한 형태로 변환하는 유틸리티 타입
+export type MaskSensitiveData<T> = T extends LoginRequest 
+  ? SafeLoginRequest 
+  : T;
+
 export interface LoginResponse {
   token: string;
   username: string;

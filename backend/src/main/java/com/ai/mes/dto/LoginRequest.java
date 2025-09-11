@@ -18,4 +18,13 @@ public class LoginRequest {
     @NotBlank(message = "비밀번호를 입력해주세요")
     @Size(min = 4, message = "비밀번호는 최소 4자 이상이어야 합니다")
     private String password;
+    
+    // 비밀번호 노출 방지를 위한 toString 오버라이드
+    @Override
+    public String toString() {
+        return "LoginRequest{" +
+                "username='" + username + '\'' +
+                ", password='[PROTECTED]'" +
+                '}';
+    }
 }
