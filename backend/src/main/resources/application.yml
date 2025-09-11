@@ -21,7 +21,7 @@ spring:
   
   security:
     jwt:
-      secret: ai-mes-jwt-secret-key-for-development-only-change-in-production
+      secret: ai-mes-jwt-secret-key-for-development-only-change-in-production-environment-64bytes-minimum
       expiration: 86400000 # 24 hours
 
 # MyBatis Configuration

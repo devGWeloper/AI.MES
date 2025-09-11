@@ -89,8 +89,15 @@ public class AuthService {
             throw e;
         } catch (Exception e) {
             // 시스템 에러만 상세 로그 기록 (비밀번호 관련 정보는 제외)
-            log.error("로그인 시스템 오류 - 사용자: {} | 오류: {}", 
-                loginRequest.getUsername(), e.getClass().getSimpleName());
+            log.error("로그인 시스템 오류 - 사용자: {} | 오류: {} | 메시지: {}", 
+                loginRequest.getUsername(), e.getClass().getSimpleName(), e.getMessage());
+            
+            // JWT 관련 오류인 경우 더 구체적인 메시지 제공
+            if (e instanceof IllegalArgumentException) {
+                log.error("JWT 설정 오류 발생: {}", e.getMessage());
+                throw new BadCredentialsException("인증 시스템 설정 오류가 발생했습니다. 관리자에게 문의하세요.");
+            }
+            
             throw new BadCredentialsException("로그인 처리 중 오류가 발생했습니다.");
         }
     }
