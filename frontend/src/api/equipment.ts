@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { backendApi, apiClient } from './client';
 import type { ApiResponse, EquipmentData } from '@/types';
 
 // Equipment 관련 API
@@ -6,7 +6,7 @@ class EquipmentApiService {
   // 설비 이력 조회
   async getEquipmentHistory(fab?: string): Promise<ApiResponse<EquipmentData[]>> {
     try {
-      const response = await apiClient.getBackendApi().get('/equipment/history', {
+      const response = await backendApi.get('/equipment/history', {
         params: { fab }
       });
       return response.data;
@@ -19,7 +19,7 @@ class EquipmentApiService {
   // 설비 상태 조회
   async getEquipmentStatus(fab?: string): Promise<ApiResponse<EquipmentData[]>> {
     try {
-      const response = await apiClient.getBackendApi().get('/equipment/status', {
+      const response = await backendApi.get('/equipment/status', {
         params: { fab }
       });
       return response.data;
@@ -37,7 +37,7 @@ class EquipmentApiService {
         params.fab = fab;
       }
       
-      const response = await apiClient.getBackendApi().get('/equipment/search', { params });
+      const response = await backendApi.get('/equipment/search', { params });
       return response.data;
     } catch (error) {
       apiClient.handleError(error, 'searchEquipment');
@@ -48,7 +48,7 @@ class EquipmentApiService {
   // 특정 설비 상세 정보
   async getEquipmentDetails(equipmentId: string): Promise<ApiResponse<EquipmentData>> {
     try {
-      const response = await apiClient.getBackendApi().get(`/equipment/${equipmentId}`);
+      const response = await backendApi.get(`/equipment/${equipmentId}`);
       return response.data;
     } catch (error) {
       apiClient.handleError(error, 'getEquipmentDetails');

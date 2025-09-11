@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { backendApi, apiClient } from './client';
 import type { ApiResponse, LotData } from '@/types';
 
 // Lot 관련 API
@@ -6,7 +6,7 @@ class LotApiService {
   // Lot 이력 조회
   async getLotHistory(fab?: string): Promise<ApiResponse<LotData[]>> {
     try {
-      const response = await apiClient.getBackendApi().get('/lots/history', {
+      const response = await backendApi.get('/lots/history', {
         params: { fab }
       });
       return response.data;
@@ -19,7 +19,7 @@ class LotApiService {
   // Lot 상태 조회
   async getLotStatus(fab?: string): Promise<ApiResponse<LotData[]>> {
     try {
-      const response = await apiClient.getBackendApi().get('/lots/status', {
+      const response = await backendApi.get('/lots/status', {
         params: { fab }
       });
       return response.data;
@@ -37,7 +37,7 @@ class LotApiService {
         params.fab = fab;
       }
       
-      const response = await apiClient.getBackendApi().get('/lots/search', { params });
+      const response = await backendApi.get('/lots/search', { params });
       return response.data;
     } catch (error) {
       apiClient.handleError(error, 'searchLots');
@@ -48,7 +48,7 @@ class LotApiService {
   // 특정 Lot 상세 정보
   async getLotDetails(lotNumber: string): Promise<ApiResponse<LotData>> {
     try {
-      const response = await apiClient.getBackendApi().get(`/lots/${lotNumber}`);
+      const response = await backendApi.get(`/lots/${lotNumber}`);
       return response.data;
     } catch (error) {
       apiClient.handleError(error, 'getLotDetails');
